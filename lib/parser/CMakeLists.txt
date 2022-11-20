@@ -1,4 +1,4 @@
-add_library(libparser token_list.cpp)
+add_library(libparser token_list.cpp parser.cpp)
 
 target_link_libraries(libparser PUBLIC liblogs liblist)
 

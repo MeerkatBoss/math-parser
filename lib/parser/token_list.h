@@ -14,8 +14,10 @@ enum token_type
     TOK_CDOT,
     TOK_FRAC,
     TOK_CARET,
-    TOK_PARENL,
-    TOK_PARENR,
+    TOK_LPAREN,
+    TOK_RPAREN,
+    TOK_LBRACE,
+    TOK_RBRACE,
     TOK_VAR,
     #include "functions.h"
 }
