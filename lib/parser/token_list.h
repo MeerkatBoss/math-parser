@@ -1,5 +1,5 @@
-#ifndef LIST_STRING_H
-#define LIST_STRING_H
+#ifndef TOKEN_LIST_H
+#define TOKEN_LIST_H
 
 #include <stddef.h>
 
