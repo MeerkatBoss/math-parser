@@ -1,0 +1,10 @@
+expression := sum
+sum := product ["+" | "-" sum]
+product := unary ["*" | "/" product]
+unary := (  "sin" | "cos" | "tg" | "ctg" |
+            "arcsin" | "arccos" | "arctg" | "arcctg" |
+            "sh" | "ch" | "th" | "th" | "ln" | "-" unary)
+                | power
+power := group ["^" power]
+group := ("(" expression ")") | atom
+atom := <number> | <name>

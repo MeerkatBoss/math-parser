@@ -1,4 +1,4 @@
-add_executable(parser main.cpp)
+add_executable(mathparser main.cpp)
 
-target_include_directories(parser PRIVATE
+target_include_directories(mathparser PRIVATE
                         ${CMAKE_CURRENT_LIST_DIR})

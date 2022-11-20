@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(akinator VERSION 1.0)
+project(math_parser VERSION 1.0)
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}-D _DEBUG -ggdb3 -std=c++2a -O0 -Wall -Wextra\
@@ -41,8 +41,12 @@ set(CMAKE_LINKER_FLAGS "${CMAKE_CXX_FLAGS}-D _DEBUG -ggdb3 -std=c++2a -O0 -Wall 
 
 add_subdirectory(lib/logger)
 
+add_subdirectory(lib/list)
+
+add_subdirectory(lib/parser)
+
 add_subdirectory(src)
 
 add_custom_target(run
-    COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${CMAKE_CURRENT_BINARY_DIR}/src/parser
-    DEPENDS parser)
+    COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${CMAKE_CURRENT_BINARY_DIR}/src/mathparser
+    DEPENDS mathparser)
