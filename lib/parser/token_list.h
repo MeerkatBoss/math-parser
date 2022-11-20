@@ -3,8 +3,6 @@
 
 #include <stddef.h>
 
-#define COS(x) cos(x)
-
 #define MATH_FUNC(name, ...) TOK_##name,
 
 enum token_type
