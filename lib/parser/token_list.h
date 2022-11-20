@@ -20,15 +20,17 @@ enum token_type
     TOK_RBRACE,
     TOK_VAR,
     #include "functions.h"
-}
+};
 
 #undef MATH_FUNC
+
+const size_t MAX_NAME = 32;
 
 struct token
 {
     token_type type;
     union {
-        const char* name;
+        char* name;
         double num;
     } value;
 };

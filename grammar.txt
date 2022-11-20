@@ -1,6 +1,6 @@
 expression  := sum
 sum         := product [("+" | "-") sum]
-product     := fraction ["\cdot" product]
+product     := fraction [["\cdot"] product]
 fraction    := "\frac{" expression "}{" expression "}" | unary
 unary       := (( "\sin"      | "\cos"    | "\tan"    | "\cot"    |
                   "\arcsin"   | "\arccos" | "\arctg"  | "\arcctg" |
