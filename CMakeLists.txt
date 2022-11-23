@@ -45,6 +45,8 @@ add_subdirectory(lib/list)
 
 add_subdirectory(lib/lexer)
 
+add_subdirectory(lib/parser)
+
 add_subdirectory(src)
 
 add_custom_target(run

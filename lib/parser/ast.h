@@ -11,11 +11,11 @@ enum node_type
 };
 union node_value{
     double num;
-    int var_id;
+    size_t var_id;
     op_type op;
 }; 
 
-#define MATH_FUNC(name, ...) OP_##name
+#define MATH_FUNC(name, ...) OP_##name,
 enum op_type
 {
     OP_ADD,
@@ -75,7 +75,7 @@ void delete_subtree(ast_node* node);
  * 
  * @return Constructed `syntax_tree` instance
  */
-syntax_tree tree_ctor(void);
+syntax_tree* tree_ctor(void);
 
 /**
  * @brief Destroy `syntax_tree`
