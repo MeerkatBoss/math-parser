@@ -43,7 +43,6 @@ syntax_tree* tree_ctor(void)
     syntax_tree *result = (syntax_tree*) calloc(1, sizeof(*result));
     *result = {
         .root    = NULL,
-        .size    = 0,
         .var_cnt = 0,
         .vars    = {}
     };

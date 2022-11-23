@@ -3,12 +3,19 @@
 
 #include <stddef.h>
 
+/**
+ * @brief AST node type
+ */
 enum node_type
 {
     T_NUM,
     T_VAR,
     T_OP
 };
+
+/**
+ * @brief AST node stored value
+ */
 union node_value{
     double num;
     size_t var_id;
@@ -16,6 +23,10 @@ union node_value{
 }; 
 
 #define MATH_FUNC(name, ...) OP_##name,
+
+/**
+ * @brief Operation type for AST nodes of type `T_OP`
+ */
 enum op_type
 {
     OP_ADD,
@@ -25,26 +36,59 @@ enum op_type
     OP_NEG,
     #include "functions.h"
 };
+
 #undef MATH_FUNC
 
+/**
+ * @brief Abstract syntax tree node
+ */
 struct ast_node
 {
+    /**
+     * @brief Node type
+     */
     node_type   type;
+    /**
+     * @brief Stored value
+     */
     node_value  value;
 
+    /**
+     * @brief Pointer to parent node (used for iteration)
+     */
     ast_node*   parent;
+    /**
+     * @brief Pointer to left child
+     */
     ast_node*   left;
+    /**
+     * @brief Pointer to right child
+     */
     ast_node*   right;
 };
 
+/**
+ * @brief Maximum allowed number of variables in expression
+ */
 const size_t MAX_VARS = 16;
 
+/**
+ * @brief Abstract syntax tree
+ */
 struct syntax_tree
 {
-    ast_node* root;
-    size_t size;
-    size_t var_cnt;
-    char *vars[MAX_VARS];
+    /**
+     * @brief Tree root node
+     */
+    ast_node*   root;
+    /**
+     * @brief Number of used variables
+     */
+    size_t      var_cnt;
+    /**
+     * @brief Array of variable names
+     */
+    char*       vars[MAX_VARS];
 };
 
 /**
