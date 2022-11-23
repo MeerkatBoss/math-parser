@@ -1,3 +1,14 @@
+/**
+ * @file ast.h
+ * @author MeerkatBoss (solodovnikov.ia@phystech.edu)
+ * @brief Abstract syntax tree struct
+ * @version 0.1
+ * @date 2022-11-23
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #ifndef TREE_H
 #define TREE_H
 
