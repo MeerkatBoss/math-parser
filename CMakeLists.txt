@@ -43,7 +43,7 @@ add_subdirectory(lib/logger)
 
 add_subdirectory(lib/list)
 
-add_subdirectory(lib/parser)
+add_subdirectory(lib/lexer)
 
 add_subdirectory(src)
 
