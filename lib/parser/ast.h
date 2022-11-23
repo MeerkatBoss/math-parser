@@ -112,6 +112,39 @@ struct syntax_tree
 ast_node* make_node(node_type type, node_value val, ast_node* parent = NULL);
 
 /**
+ * @brief Create syntax tree node for binary operation
+ * @param[in] op Operation type
+ * @param[inout] left Left operand
+ * @param[inout] right Right operand
+ * @return Created node
+ */
+ast_node* make_binary_node(op_type op, ast_node* left, ast_node* right);
+
+/**
+ * @brief Create syntax tree node for unary operation
+ * @param[in] op Operation type
+ * @param[inout] right Right operand
+ * @return Created node
+ */
+ast_node* make_unary_node(op_type op, ast_node* right);
+
+/**
+ * @brief Create syntax tree node for number constant
+ * @param[in] op Operation type
+ * @param[in] val Stored value
+ * @return Created node
+ */
+ast_node* make_number_node(double val);
+
+/**
+ * @brief Create syntax tree node for variable
+ * @param[in] op Operation type
+ * @param[in] id Variable id
+ * @return Created node
+ */
+ast_node* make_var_node(size_t id);
+
+/**
  * @brief Delete created node. Free associated resources
  * 
  * @param[inout] node `ast_node` instance to be deleted

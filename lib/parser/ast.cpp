@@ -19,6 +19,31 @@ ast_node* make_node(node_type type, node_value val, ast_node* parent)
     return node;
 }
 
+ast_node* make_binary_node(op_type op, ast_node * left, ast_node * right)
+{
+    ast_node* node = make_node(T_OP, {.op = op});
+    node->left = left;
+    node->right = right;
+    return node;
+}
+
+ast_node * make_unary_node(op_type op, ast_node * right)
+{
+    ast_node* node = make_node(T_OP, {.op = op});
+    node->right = right;
+    return node;
+}
+
+ast_node * make_number_node(double val)
+{
+    return make_node(T_NUM, {.num = val});
+}
+
+ast_node * make_var_node(size_t id)
+{
+    return make_node(T_VAR, {.var_id = id});
+}
+
 void delete_node(ast_node* node)
 {
     LOG_ASSERT(node != NULL, return);
