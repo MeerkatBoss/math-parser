@@ -39,7 +39,7 @@ struct ast_node
 
 const size_t MAX_VARS = 16;
 
-struct binary_tree
+struct syntax_tree
 {
     ast_node* root;
     size_t size;
@@ -71,18 +71,18 @@ void delete_node(ast_node* node);
 void delete_subtree(ast_node* node);
 
 /**
- * @brief Create `binary_tree` instance
+ * @brief Create `syntax_tree` instance
  * 
- * @return Constructed `binary_tree` instance
+ * @return Constructed `syntax_tree` instance
  */
-binary_tree tree_ctor(void);
+syntax_tree tree_ctor(void);
 
 /**
- * @brief Destroy `binary_tree`
+ * @brief Destroy `syntax_tree`
  * 
- * @param[inout] tree `binary_tree` instance to be destroyed
+ * @param[inout] tree `syntax_tree` instance to be destroyed
  */
-void tree_dtor(binary_tree* tree);
+void tree_dtor(syntax_tree* tree);
 
 /**
  * @brief Get iterator to first tree element
@@ -90,7 +90,7 @@ void tree_dtor(binary_tree* tree);
  * @param[in] tree 
  * @return Tree iterator
  */
-ast_node* tree_begin(binary_tree* tree);
+ast_node* tree_begin(syntax_tree* tree);
 
 /**
  * @brief Get iterator to next tree node
@@ -114,6 +114,6 @@ ast_node* prev_iterator(ast_node *node);
  * @param[in] tree 
  * @return Tree iterator 
  */
-ast_node* tree_end(binary_tree* tree);
+ast_node* tree_end(syntax_tree* tree);
 
 #endif
