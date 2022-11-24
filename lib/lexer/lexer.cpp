@@ -4,7 +4,7 @@
 
 #include "logger.h"
 
-#include "parser.h"
+#include "lexer.h"
 
 static int strpref(const char* str1, const char* str2);
 
@@ -73,6 +73,8 @@ compact_list* parse_tokens(const char* str)
         push_back(tokens, tok);
         str += n_read;
     }
+
+    push_back(tokens, {.type = TOK_EOF});
 
     return tokens;
 }

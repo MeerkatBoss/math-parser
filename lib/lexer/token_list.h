@@ -20,6 +20,7 @@ enum token_type
     TOK_RBRACE,
     TOK_VAR,
     #include "functions.h"
+    TOK_EOF
 };
 
 #undef MATH_FUNC
