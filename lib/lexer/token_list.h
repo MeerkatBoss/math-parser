@@ -16,8 +16,8 @@ enum token_type
     TOK_CARET,
     TOK_LPAREN,
     TOK_RPAREN,
-    TOK_LBRACE,
-    TOK_RBRACE,
+    TOK_LBRACKET,
+    TOK_RBRACKET,
     TOK_VAR,
     #include "functions.h"
     TOK_EOF

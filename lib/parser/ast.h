@@ -24,15 +24,6 @@ enum node_type
     T_OP
 };
 
-/**
- * @brief AST node stored value
- */
-union node_value{
-    double num;
-    size_t var_id;
-    op_type op;
-}; 
-
 #define MATH_FUNC(name, ...) OP_##name,
 
 /**
@@ -44,11 +35,21 @@ enum op_type
     OP_SUB,
     OP_MUL,
     OP_DIV,
+    OP_POW,
     OP_NEG,
     #include "functions.h"
 };
 
 #undef MATH_FUNC
+
+/**
+ * @brief AST node stored value
+ */
+union node_value{
+    double num;
+    size_t var_id;
+    op_type op;
+}; 
 
 /**
  * @brief Abstract syntax tree node

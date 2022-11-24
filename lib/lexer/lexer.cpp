@@ -37,8 +37,8 @@ compact_list* parse_tokens(const char* str)
         case '^': push_back(tokens, {.type = TOK_CARET});  continue;
         case '(': push_back(tokens, {.type = TOK_LPAREN}); continue;
         case ')': push_back(tokens, {.type = TOK_RPAREN}); continue;
-        case '{': push_back(tokens, {.type = TOK_LBRACE}); continue;
-        case '}': push_back(tokens, {.type = TOK_RBRACE}); continue;
+        case '{': push_back(tokens, {.type = TOK_LBRACKET}); continue;
+        case '}': push_back(tokens, {.type = TOK_RBRACKET}); continue;
 
         default:
             str--;

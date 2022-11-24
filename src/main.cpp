@@ -3,7 +3,7 @@
 
 #include "logger.h"
 
-#include "parser.h"
+#include "lexer.h"
 
 int main()
 {
@@ -35,17 +35,17 @@ int main()
     compact_list* tokens = parse_tokens("\\frac{1}{x^2 - 2\\cos x + 1}");
     for (list_iterator i = list_begin(tokens); i; i = next_element(tokens, i))
     {
-        token tok = get_element(tokens, i);
-        switch (tok.type)
+        token* tok = get_element(tokens, i);
+        switch (tok->type)
         {
         case TOK_NUM:
-            printf("num: %g\n", tok.value.num);
+            printf("num: %g\n", tok->value.num);
             break;
         case TOK_VAR:
-            printf("var: \"%s\"\n", tok.value.name);
+            printf("var: \"%s\"\n", tok->value.name);
             break;
         default:
-            printf("%s\n", names[tok.type]);
+            printf("%s\n", names[tok->type]);
             break;
         }
     }
@@ -54,8 +54,8 @@ int main()
 
     putc('\n', stdout);
     for (list_iterator i = list_begin(tokens); i; i = next_element(tokens, i))
-        if (get_element(tokens, i).type == TOK_VAR)
-            free(get_element(tokens, i).value.name);
+        if (get_element(tokens, i)->type == TOK_VAR)
+            free(get_element(tokens, i)->value.name);
     list_dtor(tokens);
     free(tokens);
     return 0;
