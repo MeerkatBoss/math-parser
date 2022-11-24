@@ -47,6 +47,8 @@ add_subdirectory(lib/lexer)
 
 add_subdirectory(lib/parser)
 
+add_subdirectory(lib/math)
+
 add_subdirectory(src)
 
 add_custom_target(run

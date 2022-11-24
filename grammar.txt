@@ -1,11 +1,11 @@
-expression  := sum
-sum         := product [("+" | "-") sum]
-product     := unary [["\cdot"] product]
-unary       := (( "\sin"      | "\cos"    | "\tan"    | "\cot"    |
+expression  = sum '\0'
+sum         = product {("+" | "-") product}
+product     = unary {"\cdot" unary}
+unary       = (( "\sin"      | "\cos"    | "\tan"    | "\cot"    |
                   "\arcsin"   | "\arccos" | "\arctg"  | "\arcctg" |
                   "\sinh"     | "\cosh"   | "\tanh"   | "\coth"   |
                   "\ln"       | "\sqrt"   | "-") unary) | frac
-fraction    := "\frac{" expression "}{" expression "}" | power
-power       := group ["^" power]
-group       := ("(" expression ")") | atom
-atom        := <number> | <name>
+fraction    = "\frac{" sum "}{" sum "}" | power
+power       = group ["^" power]
+group       = ("(" expression ")") | atom
+atom        = NUMBER | NAME
