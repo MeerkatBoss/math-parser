@@ -14,8 +14,8 @@ struct parsing_state
 
 static ast_node* parse_sum(parsing_state* state);
 static ast_node* parse_product(parsing_state* state);
-static ast_node* parse_fraction(parsing_state* state);
 static ast_node* parse_unary(parsing_state* state);
+static ast_node* parse_fraction(parsing_state* state);
 static ast_node* parse_power(parsing_state* state);
 static ast_node* parse_group(parsing_state* state);
 static ast_node* parse_atom(parsing_state* state);
@@ -65,11 +65,12 @@ syntax_tree* build_tree(const compact_list * tokens)
         tree_dtor(ast);
         return NULL;
     });
-    LOG_ASSERT_ERROR(state.pos == 0,
+    LOG_ASSERT_ERROR(consume_check(&state, TOK_EOF),
     {
         tree_dtor(ast);
         return NULL;
     }, "Unexpected tokens after expression end.", NULL);
+    ast->var_cnt = state.var_cnt;
     return ast;
 }
 
@@ -92,21 +93,46 @@ static ast_node* parse_sum(parsing_state* state)
 
 static ast_node * parse_product(parsing_state * state)
 {
-    ast_node* left = parse_fraction(state);
+    ast_node* left = parse_unary(state);
     while(consume_check(state, TOK_CDOT))   /* TODO: handle implicit multiplication */
     {
         advance(state);
-        ast_node* right = parse_fraction(state);
+        ast_node* right = parse_unary(state);
         LOG_ASSERT(right != NULL, return NULL);
         left = make_binary_node(OP_MUL, left, right);
     }
     return left;
 }
 
+ast_node * parse_unary(parsing_state * state)
+{
+    #define MATH_FUNC(name, ...)                                    \
+        case TOK_##name:                                            \
+            advance(state);                                         \
+            return make_unary_node(OP_##name, parse_unary(state));
+    
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wswitch-enum"
+    switch (current_token(state)->type)
+    {
+    case TOK_MINUS:
+        advance(state);
+        return make_unary_node(OP_NEG, parse_unary(state));
+
+    #include "functions.h"
+    
+    default:
+        return parse_fraction(state);
+    }
+    #pragma GCC diagnostic pop
+
+    LOG_ASSERT(0 && "Unreachable code", return NULL);
+}
+
 ast_node * parse_fraction(parsing_state * state)
 {
     if (!consume_check(state, TOK_FRAC))
-        return parse_unary(state);
+        return parse_power(state);
 
     LOG_ASSERT_ERROR(consume_check(state, TOK_LBRACKET), return NULL,
         "Expected '{' after '\\frac'", NULL);
@@ -130,34 +156,14 @@ ast_node * parse_fraction(parsing_state * state)
     return make_binary_node(OP_DIV, left, right);
 }
 
-ast_node * parse_unary(parsing_state * state)
-{
-    #define MATH_FUNC(name, ...)                                    \
-        case TOK_##name:                                            \
-            advance(state);                                         \
-            return make_unary_node(OP_##name, parse_unary(state));
-    
-    switch (current_token(state)->type)
-    {
-    case TOK_MINUS:
-        advance(state);
-        return make_unary_node(OP_NEG, parse_unary(state));
-
-    #include "functions.h"
-    
-    default:
-        return parse_power(state);
-    }
-
-    LOG_ASSERT(0 && "Unreachable code", return NULL);
-}
-
 ast_node * parse_power(parsing_state * state)
 {
     ast_node* left = parse_group(state);
 
     if (consume_check(state, TOK_CARET))
         return make_binary_node(OP_POW, left, parse_power(state));
+    
+    return left;
 }
 
 ast_node * parse_group(parsing_state * state)
@@ -190,11 +196,11 @@ ast_node * parse_atom(parsing_state * state)
     {
         char *name = last_token(state)->value.name;
         size_t var_id = get_var_id(state, name);
-        free(name);
         return make_var_node(var_id);
     }
 
-    LOG_ASSERT_ERROR(0, return NULL, "Unexpected token", NULL);
+    LOG_ASSERT_ERROR(0, return NULL,
+        "Unexpected token %d", current_token(state)->type);
 }
 
 size_t get_var_id(parsing_state * state, const char * name)

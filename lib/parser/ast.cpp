@@ -24,6 +24,8 @@ ast_node* make_binary_node(op_type op, ast_node * left, ast_node * right)
     ast_node* node = make_node(T_OP, {.op = op});
     node->left = left;
     node->right = right;
+    left->parent = node;
+    right->parent = node;
     return node;
 }
 
@@ -31,6 +33,7 @@ ast_node * make_unary_node(op_type op, ast_node * right)
 {
     ast_node* node = make_node(T_OP, {.op = op});
     node->right = right;
+    right->parent = node;
     return node;
 }
 
@@ -86,6 +89,8 @@ void tree_dtor(syntax_tree* tree)
         free(tree->vars[i]);
         tree->vars[i] = NULL;
     }
+
+    free(tree);
 }
 
 ast_node* tree_begin(syntax_tree* tree)
