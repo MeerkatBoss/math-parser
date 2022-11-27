@@ -161,3 +161,136 @@ ast_node* tree_end(syntax_tree* tree)
     
     return node;
 }
+
+static void print_node(
+                    const ast_node* node,
+                    const syntax_tree* ast,
+                    FILE* stream);
+static int requires_grouping(const ast_node* parent, const ast_node* child);
+static int is_unary(op_type op);
+static void print_op(op_type op, FILE* stream);
+
+void print_tree(const syntax_tree * ast, FILE * stream)
+{
+    print_node(ast->root, ast, stream);
+}
+
+static void print_node(
+                    const ast_node * node,
+                    const syntax_tree * ast,
+                    FILE * stream)
+{
+    if (node->type == T_NUM)
+    {
+        fprintf(stream, "%g ", node->value.num);
+        return;
+    }
+    if (node->type == T_VAR)
+    {
+        LOG_ASSERT_ERROR(node->value.var_id < ast->var_cnt,
+        {
+            fprintf(stream, "[UNKNOWN]");
+            return;
+        }, "Unknown variable encountered.", NULL);
+
+        fprintf(stream, "%s ", ast->vars[node->value.var_id]);
+        return;
+    }
+    if (node->value.op == OP_DIV)
+    {
+        fprintf(stream, "\\frac{");
+        print_node(node->left, ast, stream);
+        fprintf(stream, "}{");
+        print_node(node->right, ast, stream);
+        fprintf(stream, "} ");
+        return;
+    }
+    
+    int group = 0;
+    if (!is_unary(node->value.op))
+    {
+        group = requires_grouping(node, node->left);
+        if (group) fprintf(stream, "\\left( ");
+        print_node(node->left, ast, stream);
+        if (group) fprintf(stream, "\\right) ");
+    }
+
+    print_op(node->value.op, stream);
+
+    if (node->value.op == OP_POW)
+    {
+        fprintf(stream, "{ ");
+        print_node(node->right, ast, stream);
+        fprintf(stream, "} ");
+        return;
+    }
+
+    group = requires_grouping(node, node->right);
+    if (group) fprintf(stream, "\\left( ");
+    print_node(node->right, ast, stream);
+    if (group) fprintf(stream, "\\right) ");
+}
+
+int requires_grouping(const ast_node * parent, const ast_node * child)
+{
+    if (child->type != T_OP)
+        return 0;
+    LOG_ASSERT(parent->type == T_OP, return 0);
+
+    op_type child_op = child->value.op;
+
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wswitch-enum"
+    switch (parent->value.op)
+    {
+    case OP_ADD:
+        return 0;
+    case OP_SUB:
+        return child == parent->right
+            && (child_op == OP_ADD || child_op == OP_SUB);
+    case OP_MUL:
+    case OP_DIV:
+        return child_op == OP_ADD || child_op == OP_SUB;
+    case OP_POW:
+        return child == parent->left;
+    default:
+        return child_op == OP_POW || is_unary(child_op);
+    }
+    #pragma GCC diagnostic pop
+
+    LOG_ASSERT(0 && "Unreachable code", return 0);
+}
+
+int is_unary(op_type op)
+{
+    return !(
+        op == OP_ADD || op == OP_SUB ||
+        op == OP_MUL || op == OP_DIV ||
+        op == OP_POW
+    );
+}
+
+static void print_op(op_type op, FILE* stream)
+{
+    switch (op)
+    {
+        case OP_ADD: fprintf(stream, "+ ");         return;
+        case OP_SUB: fprintf(stream, "- ");         return;
+        case OP_MUL: fprintf(stream, "\\cdot ");    return;
+        case OP_DIV: fprintf(stream, "/ ");         return;
+        case OP_POW: fprintf(stream, "^");          return;
+        case OP_NEG: fprintf(stream, "-");          return;
+        case OP_LN:  fprintf(stream, "\\ln");       return;
+        case OP_SQRT:fprintf(stream, "\\sqrt");     return;
+        case OP_SIN: fprintf(stream, "\\sin");      return;
+        case OP_COS: fprintf(stream, "\\cos");      return;
+        case OP_TAN: fprintf(stream, "\\tan");      return;
+        case OP_COT: fprintf(stream, "\\cot");      return;
+        case OP_ARCSIN: fprintf(stream, "\\arcsin");return;
+        case OP_ARCCOS: fprintf(stream, "\\arccos");return;
+        case OP_ARCTAN: fprintf(stream, "\\arctan");return;
+        case OP_ARCCOT: fprintf(stream, "\\arccot");return;
+        default: LOG_ASSERT(0 && "Invalid enum value.", return);
+    }
+    LOG_ASSERT(0 && "Unreachable code", return);
+}

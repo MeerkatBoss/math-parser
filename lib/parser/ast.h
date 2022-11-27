@@ -205,4 +205,12 @@ ast_node* prev_iterator(ast_node *node);
  */
 ast_node* tree_end(syntax_tree* tree);
 
+/**
+ * @brief Output tree to specified stream in LaTeX format
+ * 
+ * @param[in] ast Printed tree
+ * @param[in] stream Output stream
+ */
+void print_tree(const syntax_tree* ast, FILE* stream);
+
 #endif
