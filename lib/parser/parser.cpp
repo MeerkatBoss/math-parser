@@ -96,7 +96,6 @@ static ast_node * parse_product(parsing_state * state)
     ast_node* left = parse_unary(state);
     while(consume_check(state, TOK_CDOT))   /* TODO: handle implicit multiplication */
     {
-        advance(state);
         ast_node* right = parse_unary(state);
         LOG_ASSERT(right != NULL, return NULL);
         left = make_binary_node(OP_MUL, left, right);

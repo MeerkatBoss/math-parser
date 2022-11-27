@@ -5,6 +5,6 @@
 
 syntax_tree* derivative(syntax_tree* ast, const char* var);
 
-syntax_tree* simplify(syntax_tree* ast);
+void simplify(syntax_tree* ast);
 
 #endif

@@ -5,6 +5,7 @@
 
 #include "lexer.h"
 #include "parser.h"
+#include "tree_math.h"
 
 int main()
 {
@@ -31,10 +32,12 @@ int main()
     #undef MATH_FUNC
     
 
-    compact_list* tokens = parse_tokens("-\\frac{1}{x^2 - 2\\cdot\\cos x + 1}");
+    compact_list* tokens = parse_tokens("x^2 + 2 \\cdot x - 1");
     syntax_tree* ast = build_tree(tokens);
+    syntax_tree* deriv = derivative(ast, "x");
+    simplify(deriv);
 
-    for (ast_node* node = tree_begin(ast); node != NULL; node = next_iterator(node))
+    for (ast_node* node = tree_begin(deriv); node != NULL; node = next_iterator(node))
         switch(node->type)
         {
             case T_NUM:
@@ -61,5 +64,6 @@ int main()
     list_dtor(tokens);
     free(tokens);
     tree_dtor(ast);
+    tree_dtor(deriv);
     return 0;
 }
