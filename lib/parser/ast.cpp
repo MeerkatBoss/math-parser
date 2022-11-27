@@ -165,21 +165,56 @@ ast_node* tree_end(syntax_tree* tree)
 static void print_node(
                     const ast_node* node,
                     const syntax_tree* ast,
+                    const ast_node* dictionary['Z'-'A'+1],
                     FILE* stream);
 static int requires_grouping(const ast_node* parent, const ast_node* child);
 static int is_unary(op_type op);
 static void print_op(op_type op, FILE* stream);
+static int extract_blocks(const ast_node* node, const ast_node* dictionary['Z'-'A'+1]);
+static char get_definition(const ast_node* node, const ast_node* dictionary['Z'-'A'+1]);
 
 void print_tree(const syntax_tree * ast, FILE * stream)
 {
-    print_node(ast->root, ast, stream);
+    const ast_node* dictionary['Z'-'A'+1] = {};
+    extract_blocks(ast->root, dictionary);
+
+    char short_root = get_definition(ast->root, dictionary);
+    if (short_root != '\0')
+        dictionary[short_root - 'A'] = NULL;
+
+    fprintf(stream, "$");
+    print_node(ast->root, ast, dictionary, stream);
+    fprintf(stream, "$\n\n");
+    if (dictionary[0])
+    {
+        fprintf(stream, "Where:\n"
+                        "\\begin{itemize}\n");
+        for (char i = 'A'; i <= 'Z' && dictionary[i - 'A'] != NULL; i++)
+        {
+            fprintf(stream, "\t\\item $%c = ", i);
+            const ast_node* def = dictionary[i - 'A'];
+            dictionary[i - 'A'] = NULL;
+            print_node(def, ast, dictionary, stream);
+            dictionary[i - 'A'] = def;
+            fprintf(stream, "$\n");
+        }
+        fprintf(stream, "\\end{itemize}\n\n");
+    }
 }
 
 static void print_node(
                     const ast_node * node,
                     const syntax_tree * ast,
+                    const ast_node* dictionary['Z'-'A'+1],
                     FILE * stream)
 {
+    char shorthand = get_definition(node, dictionary);
+    if (shorthand != '\0')
+    {
+        fprintf(stream, "%c ", shorthand);
+        return;
+    }
+
     if (node->type == T_NUM)
     {
         fprintf(stream, "%g ", node->value.num);
@@ -199,9 +234,9 @@ static void print_node(
     if (node->value.op == OP_DIV)
     {
         fprintf(stream, "\\frac{");
-        print_node(node->left, ast, stream);
+        print_node(node->left, ast, dictionary, stream);
         fprintf(stream, "}{");
-        print_node(node->right, ast, stream);
+        print_node(node->right, ast, dictionary, stream);
         fprintf(stream, "} ");
         return;
     }
@@ -211,7 +246,7 @@ static void print_node(
     {
         group = requires_grouping(node, node->left);
         if (group) fprintf(stream, "\\left( ");
-        print_node(node->left, ast, stream);
+        print_node(node->left, ast, dictionary, stream);
         if (group) fprintf(stream, "\\right) ");
     }
 
@@ -220,7 +255,7 @@ static void print_node(
     if (node->value.op == OP_POW || node->value.op == OP_SQRT)
     {
         fprintf(stream, "{");
-        print_node(node->right, ast, stream);
+        print_node(node->right, ast, dictionary, stream);
         fprintf(stream, "} ");
         return;
     }
@@ -228,12 +263,12 @@ static void print_node(
     group = requires_grouping(node, node->right);
     if (group) fprintf(stream, "\\left( ");
 
-    print_node(node->right, ast, stream);
+    print_node(node->right, ast, dictionary, stream);
 
     if (group) fprintf(stream, "\\right) ");
 }
 
-int requires_grouping(const ast_node * parent, const ast_node * child)
+static int requires_grouping(const ast_node * parent, const ast_node * child)
 {
     if (child->type != T_OP)
         return 0;
@@ -265,7 +300,7 @@ int requires_grouping(const ast_node * parent, const ast_node * child)
     LOG_ASSERT(0 && "Unreachable code", return 0);
 }
 
-int is_unary(op_type op)
+static int is_unary(op_type op)
 {
     return !(
         op == OP_ADD || op == OP_SUB ||
@@ -297,4 +332,34 @@ static void print_op(op_type op, FILE* stream)
         default: LOG_ASSERT(0 && "Invalid enum value.", return);
     }
     LOG_ASSERT(0 && "Unreachable code", return);
+}
+
+int extract_blocks(const ast_node * node, const ast_node * dictionary['Z'-'A'+ 1])
+{
+    const int MAX_SIZE = 32;
+    if (!node) return 0;
+    int size = extract_blocks(node->left, dictionary)
+                + extract_blocks(node->right, dictionary) + 1;
+    if (size > MAX_SIZE)
+    {
+        int found = 0;
+        for (char i = 'A'; i <= 'Z'; i++)
+        {
+            if (dictionary[i - 'A']) continue;
+            dictionary[i - 'A'] = node;
+            found = 1;
+            break;
+        }
+        LOG_ASSERT_ERROR(found, return size,
+                            "Too many attempted extractions.", NULL);
+        return 1;
+    }
+    return size;
+}
+
+char get_definition(const ast_node * node, const ast_node * dictionary['Z'-'A'+ 1])
+{
+    for (char i = 'A'; i <= 'Z' && dictionary[i - 'A']; i++)
+        if (dictionary[i - 'A'] == node) return i;
+    return '\0';
 }

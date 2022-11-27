@@ -20,10 +20,12 @@ int main()
     compact_list* tokens = parse_tokens("(\\sin x + \\arctan x)^{\\frac{42 - \\sqrt{x^2 - 3}}{4 - x^4}}");
     syntax_tree* ast = build_tree(tokens);
     syntax_tree* deriv = derivative(ast, "x");
-    simplify(deriv);
 
     print_tree(ast, stdout);
     putc('\n', stdout);
+    print_tree(deriv, stdout);
+    putc('\n', stdout);
+    simplify(deriv);
     print_tree(deriv, stdout);
     putc('\n', stdout);
 
