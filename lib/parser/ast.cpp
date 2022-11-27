@@ -217,9 +217,9 @@ static void print_node(
 
     print_op(node->value.op, stream);
 
-    if (node->value.op == OP_POW)
+    if (node->value.op == OP_POW || node->value.op == OP_SQRT)
     {
-        fprintf(stream, "{ ");
+        fprintf(stream, "{");
         print_node(node->right, ast, stream);
         fprintf(stream, "} ");
         return;
@@ -227,7 +227,9 @@ static void print_node(
 
     group = requires_grouping(node, node->right);
     if (group) fprintf(stream, "\\left( ");
+
     print_node(node->right, ast, stream);
+
     if (group) fprintf(stream, "\\right) ");
 }
 
@@ -253,8 +255,10 @@ int requires_grouping(const ast_node * parent, const ast_node * child)
         return child_op == OP_ADD || child_op == OP_SUB;
     case OP_POW:
         return child == parent->left;
+    case OP_SQRT:
+        return 0;
     default:
-        return child_op == OP_POW || is_unary(child_op);
+        return child_op == OP_ADD || child_op == OP_SUB;
     }
     #pragma GCC diagnostic pop
 
@@ -280,16 +284,16 @@ static void print_op(op_type op, FILE* stream)
         case OP_DIV: fprintf(stream, "/ ");         return;
         case OP_POW: fprintf(stream, "^");          return;
         case OP_NEG: fprintf(stream, "-");          return;
-        case OP_LN:  fprintf(stream, "\\ln");       return;
-        case OP_SQRT:fprintf(stream, "\\sqrt");     return;
-        case OP_SIN: fprintf(stream, "\\sin");      return;
-        case OP_COS: fprintf(stream, "\\cos");      return;
-        case OP_TAN: fprintf(stream, "\\tan");      return;
-        case OP_COT: fprintf(stream, "\\cot");      return;
-        case OP_ARCSIN: fprintf(stream, "\\arcsin");return;
-        case OP_ARCCOS: fprintf(stream, "\\arccos");return;
-        case OP_ARCTAN: fprintf(stream, "\\arctan");return;
-        case OP_ARCCOT: fprintf(stream, "\\arccot");return;
+        case OP_LN:  fprintf(stream, "\\ln ");      return;
+        case OP_SQRT:fprintf(stream, "\\sqrt ");    return;
+        case OP_SIN: fprintf(stream, "\\sin ");     return;
+        case OP_COS: fprintf(stream, "\\cos ");     return;
+        case OP_TAN: fprintf(stream, "\\tan ");     return;
+        case OP_COT: fprintf(stream, "\\cot ");     return;
+        case OP_ARCSIN: fprintf(stream, "\\arcsin ");return;
+        case OP_ARCCOS: fprintf(stream, "\\arccos ");return;
+        case OP_ARCTAN: fprintf(stream, "\\arctan ");return;
+        case OP_ARCCOT: fprintf(stream, "\\arccot ");return;
         default: LOG_ASSERT(0 && "Invalid enum value.", return);
     }
     LOG_ASSERT(0 && "Unreachable code", return);

@@ -232,6 +232,7 @@ static void simplify_sum(ast_node * node)
         node->type = T_NUM;
         node->value.num = 0;
     }
+
     if (node->left->type == T_NUM && fabs(node->left->value.num) < EPS)
     {
         delete_node(node->left);
@@ -243,8 +244,7 @@ static void simplify_sum(ast_node * node)
             node->value.op = OP_NEG;
         return;
     }
-
-    if(node->right->type == T_NUM && node->right->value.num == 0)
+    if (node->right->type == T_NUM && fabs(node->right->value.num) < EPS)
     {
         delete_node(node->right);
 
@@ -252,26 +252,302 @@ static void simplify_sum(ast_node * node)
         return;
     }
 
+    if (node->left ->type == T_OP && node->left ->value.op == OP_NEG &&
+        node->right->type == T_OP && node->right->value.op == OP_NEG)
+    {
+        replace_with(node-> left, node->left ->right);
+        replace_with(node->right, node->right->right);
+        if (node->value.op == OP_SUB)
+        {
+            ast_node* tmp = node->left;
+            node->left = node->right;
+            node->right = tmp;
+            
+            return;
+        }
+
+        replace_with(node, NEG(ADD(LEFT, RIGHT)));
+        return;
+    }
+    if (node->left ->type == T_OP && node->left ->value.op == OP_NEG)
+    {
+        replace_with(node-> left, node->left ->right);
+        if (node->value.op == OP_SUB)
+        {
+            replace_with(node, NEG(ADD(LEFT, RIGHT)));
+            return;
+        }
+
+        replace_with(node, SUB(RIGHT, LEFT));
+        return;
+    }
+    if (node->right->type == T_OP && node->right->value.op == OP_NEG)
+    {
+        replace_with(node->right, node->right->right);
+        if (node->value.op == OP_SUB)
+        {
+            replace_with(node, ADD(LEFT, RIGHT));
+            return;
+        }
+
+        replace_with(node, SUB(LEFT, RIGHT));
+        return;
+    }
 }
 
 void simplify_product(ast_node * node)
 {
+    if (node->left ->type == T_NUM &&
+        node->right->type == T_NUM)
+    {
+        node->type = T_NUM;
+        double l = node->left ->value.num;
+        double r = node->right->value.num;
+        node->value.num = l * r;
+
+        delete_node(node->left);
+        delete_node(node->right);
+
+        node->left = NULL;
+        node->right = NULL;
+        return;
+    }
+    if (node->left ->type == T_VAR &&
+        node->right->type == T_VAR &&
+        node->left->value.var_id == node->right->value.var_id)
+    {
+        size_t var = node->left->value.var_id;
+        delete_node(node->left);
+        delete_node(node->right);
+        node->left = NULL;
+        node->right = NULL;
+        node->value.op = OP_POW;
+
+        node->left  = VAR(var);
+        node->right = NUM(2);
+        return;
+    }
+    if (node->left ->type == T_NUM && fabs(node->left ->value.num) < EPS ||
+        node->right->type == T_NUM && fabs(node->right->value.num) < EPS)
+    {
+        delete_node(node->left);
+        delete_node(node->right);
+        node->left = NULL;
+        node->right = NULL;
+
+        node->type = T_NUM;
+        node->value.num = 0;
+
+        return;
+    }
+    if (node->left ->type == T_OP && node->left ->value.op == OP_NEG &&
+        node->right->type == T_OP && node->right->value.op == OP_NEG)
+    {
+        replace_with(node->left,  node->left ->right);
+        replace_with(node->right, node->right->right);
+        return;
+    }
+    if (node->left ->type == T_OP && node->left ->value.op == OP_NEG)
+    {
+        replace_with(node->left,  node->left ->right);
+        replace_with(node, NEG(MUL(LEFT, RIGHT)));
+        simplify_product(node->right);
+        simplify_negative(node);
+
+        return;
+    }
+    if (node->right->type == T_OP && node->right->value.op == OP_NEG)
+    {
+        replace_with(node->right, node->right->right);
+        replace_with(node, NEG(MUL(LEFT, RIGHT)));
+        simplify_product(node->right);
+        simplify_negative(node);
+
+        return;
+    }
+    if (node->left->type == T_NUM && node->left->value.num < 0)
+    {
+        node->left->value.num *= -1;
+        replace_with(node, NEG(MUL(LEFT, RIGHT)));
+        simplify_product(node->right);
+        simplify_negative(node);
+
+        return;
+    }
+    if (node->right->type == T_NUM && node->right->value.num < 0)
+    {
+        node->right->value.num *= -1;
+        replace_with(node, NEG(MUL(LEFT, RIGHT)));
+        simplify_product(node->right);
+        simplify_negative(node);
+
+        return;
+    }
+    if (node->left->type == T_NUM && fabs(node->left->value.num - 1) < EPS)
+    {
+        delete_node(node->left);
+        node->left = NULL;
+
+        replace_with(node, node->right);
+
+        return;
+    }
+    if (node->right->type == T_NUM && fabs(node->right->value.num - 1) < EPS)
+    {
+        delete_node(node->right);
+        node->right = NULL;
+
+        replace_with(node, node->left);
+
+        return;
+    }
 }
 
 void simplify_negative(ast_node * node)
 {
+    if (node->right->type == T_OP && node->right->value.op == OP_NEG)
+    {
+        ast_node* tmp = node->right;
+        replace_with(node, tmp->right);
+
+        tmp->right = NULL;
+        delete_node(tmp);
+
+        return;
+    }
+
+    if (node->right->type == T_OP && node->right->value.op == OP_SUB)
+    {
+        ast_node* tmp = node->right->left;
+        node->right->left = node->right->right;
+        node->right->right = tmp;
+        return;
+    }
 }
 
 void simplify_func(ast_node * node)
 {
+    if (node->value.op == OP_LN && node->right->type == T_NUM &&
+        fabs(node->right->value.num - 1) < EPS)
+    {
+        node->type = T_NUM;
+        node->value.num = 0;
+
+        delete_node(node->right);
+
+        node->right = NULL;
+        return;
+
+    }
+    if ((node->value.op == OP_SIN || node->value.op == OP_ARCSIN ||
+         node->value.op == OP_TAN || node->value.op == OP_ARCTAN  ||
+         node->value.op == OP_COT || node->value.op == OP_ARCCOT) &&
+            node->right->type == T_OP && node->right->value.op == OP_NEG)
+    {
+        node->right->value.op = node->value.op;
+        node->value.op = OP_NEG;
+        return;
+    }
+    
+    if (node->value.op == OP_COS && node->right->type == T_OP &&
+        node->right->value.op == OP_NEG)
+    {
+        replace_with(node->right, node->right->right);
+        return;
+    }
 }
 
 void simplify_fraction(ast_node * node)
 {
+    if (node->left ->type == T_NUM &&
+        node->right->type == T_NUM)
+    {
+        node->type = T_NUM;
+        double l = node->left ->value.num;
+        double r = node->right->value.num;
+        node->value.num = l / r;
+
+        delete_node(node->left);
+        delete_node(node->right);
+
+        node->left = NULL;
+        node->right = NULL;
+        return;
+    }
+
+    if (node->left ->type == T_NUM && fabs(node->left ->value.num) < EPS)
+    {
+        delete_node(node->left);
+        delete_node(node->right);
+        node->left = NULL;
+        node->right = NULL;
+
+        node->type = T_NUM;
+        node->value.num = 0;
+
+        return;
+    }
+    if (node->right->type == T_NUM && fabs(node->right->value.num - 1) < EPS)
+    {
+        delete_node(node->right);
+        node->right = NULL;
+
+        replace_with(node, node->left);
+
+        return;
+    }
+    if (node->right->type == T_NUM && fabs(node->right->value.num + 1) < EPS)
+    {
+        delete_node(node->right);
+        node->right = node->left;
+        node->left = NULL;
+
+        node->value.op = OP_NEG;
+
+        return;
+    }
 }
 
 void simplify_power(ast_node * node)
 {
+    if (node->left ->type == T_NUM &&
+        node->right->type == T_NUM)
+    {
+        node->type = T_NUM;
+        double l = node->left ->value.num;
+        double r = node->right->value.num;
+        node->value.num = pow(l, r);
+
+        delete_node(node->left);
+        delete_node(node->right);
+
+        node->left = NULL;
+        node->right = NULL;
+        return;
+    }
+    if (node->right->type == T_NUM && node->left->type == T_OP &&
+        node->left->value.op == OP_NEG)
+    {
+        int pw = round(node->right->value.num);
+        if (fabs(node->right->value.num - pw) >= EPS)
+            return;
+        if (pw % 2 == 0)
+        {
+            replace_with(node->left, node->left->right);
+            return;
+        }
+        node->left->left = node->left->right;
+        node->left->left->parent = node->left;
+
+        node->left->right = node->right;
+        node->left->right->parent = node->left;
+
+        node->left->value.op = OP_POW;
+        node->right = node->left;
+        node->left = NULL;
+        node->value.op = OP_NEG;
+        return;
+    }
 }
 
 static void replace_with(ast_node * dest, ast_node * src)
