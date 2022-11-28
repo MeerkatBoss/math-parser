@@ -17,16 +17,17 @@ int main()
         .settings_mask = LGS_KEEP_OPEN | LGS_USE_ESCAPE
     });
 
-    compact_list* tokens = parse_tokens("(\\sin x + \\arctan x)^{\\frac{42 - \\sqrt{x^2 - 3}}{4 - x^4}}");
+    compact_list* tokens = parse_tokens("(x + 1)^{\\frac{\\sin x}{2}} \\cdot (\\arctan \\sqrt{x^2 + 1})^{x - 2}");
     syntax_tree* ast = build_tree(tokens);
     syntax_tree* deriv = derivative(ast, "x");
+    syntax_tree* maclaurin = maclaurin_series(ast, "x", 3);
+
 
     print_tree(ast, stdout);
     putc('\n', stdout);
     print_tree(deriv, stdout);
     putc('\n', stdout);
-    simplify(deriv);
-    print_tree(deriv, stdout);
+    print_tree(maclaurin, stdout);
     putc('\n', stdout);
 
     for (list_iterator it = list_begin(tokens);
@@ -41,5 +42,6 @@ int main()
     free(tokens);
     tree_dtor(ast);
     tree_dtor(deriv);
+    tree_dtor(maclaurin);
     return 0;
 }

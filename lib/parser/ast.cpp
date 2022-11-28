@@ -60,7 +60,7 @@ void delete_subtree(ast_node* node)
 {
     LOG_ASSERT(node != NULL, return);
 
-    if (node->left) delete_subtree(node->left);
+    if (node-> left) delete_subtree(node->left);
     if (node->right) delete_subtree(node->right);
 
     free(node);
@@ -182,9 +182,9 @@ void print_tree(const syntax_tree * ast, FILE * stream)
     if (short_root != '\0')
         dictionary[short_root - 'A'] = NULL;
 
-    fprintf(stream, "$");
+    fprintf(stream, "\\begin{equation}\n");
     print_node(ast->root, ast, dictionary, stream);
-    fprintf(stream, "$\n\n");
+    fprintf(stream, "\n\\end{equation}\n\n");
     if (dictionary[0])
     {
         fprintf(stream, "Where:\n"
@@ -336,7 +336,7 @@ static void print_op(op_type op, FILE* stream)
 
 int extract_blocks(const ast_node * node, const ast_node * dictionary['Z'-'A'+ 1])
 {
-    const int MAX_SIZE = 32;
+    const int MAX_SIZE = 24;
     if (!node) return 0;
     int size = extract_blocks(node->left, dictionary)
                 + extract_blocks(node->right, dictionary) + 1;
