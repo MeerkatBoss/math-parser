@@ -19,7 +19,7 @@
  */
 enum node_type
 {
-    T_NUM,
+    T_NUM, // TODO: improve naming! NODE_NUM? NODE_TYPE_NUM?
     T_VAR,
     T_OP
 };
@@ -87,7 +87,7 @@ const size_t MAX_VARS = 16;
 /**
  * @brief Abstract syntax tree
  */
-struct syntax_tree
+struct syntax_tree // TODO: ast_node therefore abstract_syntax_tree? ass_tree?
 {
     /**
      * @brief Tree root node
@@ -96,15 +96,18 @@ struct syntax_tree
     /**
      * @brief Number of used variables
      */
-    size_t      var_cnt;
+
+    size_t      var_cnt; // TODO: dynamic_array(char*)???
     /**
      * @brief Array of variable names
      */
-    char*       vars[MAX_VARS];
+    char*       vars[MAX_VARS]; // TODO: make dynamic
 };
 
+// TODO: define_stack(int) ?
+
 /**
- * @brief Create new tree node with specified parent
+ * @brief Create new tree node with specified parent // TODO: explain what happens to children!
  * 
  * @param[in] data Data stored in node
  * @param[in] parent Parent node
@@ -146,11 +149,11 @@ ast_node* make_number_node(double val);
 ast_node* make_var_node(size_t id);
 
 /**
- * @brief Delete created node. Free associated resources
+ * @brief Delete created node. Free associated resources // TODO: explain here!
  * 
  * @param[inout] node `ast_node` instance to be deleted
  */
-void delete_node(ast_node* node);
+void delete_node(ast_node* node); // TODO: Why do you need this? Make static?
 
 /**
  * @brief Delete subtree of chosen node. Free associated resources.
@@ -182,12 +185,12 @@ void tree_dtor(syntax_tree* tree);
 ast_node* tree_begin(syntax_tree* tree);
 
 /**
- * @brief Get iterator to next tree node
+ * @brief Get iterator to next tree node // TODO: write about which one is next
  * 
  * @param[in] node Current tree node
  * @return Tree iterator
  */
-ast_node* next_iterator(ast_node *node);
+ast_node* next_iterator(ast_node *node); // TODO: typedef iterator? get_next_iterator? Try to use verbs in function names
 
 /**
  * @brief Get iterator to previous tree node

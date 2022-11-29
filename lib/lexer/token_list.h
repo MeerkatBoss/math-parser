@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 
+// TODO: move closer, undef!
 #define MATH_FUNC(name, ...) TOK_##name,
 
 enum token_type

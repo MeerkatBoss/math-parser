@@ -11,7 +11,7 @@ static int strpref(const char* str1, const char* str2);
 compact_list* parse_tokens(const char* str)
 {
     compact_list *tokens = (compact_list*)calloc(1, sizeof(*tokens));
-    *tokens = list_ctor();
+    *tokens = list_ctor(); // TODO: Why by value?
 
     while(*str)
     {
@@ -23,7 +23,7 @@ compact_list* parse_tokens(const char* str)
         double number = 0;
         int n_read = 0;
         
-        if(sscanf(str, " %lg %n", &number, &n_read) == 1)
+        if(sscanf(str, " %lg %n", &number, &n_read) == 1) // TODO: scanf in lexer cringe
         {
             push_back(tokens, {.type = TOK_NUM, .value = {.num = number}});
             str += n_read;
@@ -36,7 +36,7 @@ compact_list* parse_tokens(const char* str)
         case '-': push_back(tokens, {.type = TOK_MINUS});  continue;
         case '^': push_back(tokens, {.type = TOK_CARET});  continue;
         case '(': push_back(tokens, {.type = TOK_LPAREN}); continue;
-        case ')': push_back(tokens, {.type = TOK_RPAREN}); continue;
+        case ')': push_back(tokens, {.type = TOK_RPAREN}); continue; // TODO: alignment kills me (sad)
         case '{': push_back(tokens, {.type = TOK_LBRACKET}); continue;
         case '}': push_back(tokens, {.type = TOK_RBRACKET}); continue;
 
@@ -79,7 +79,8 @@ compact_list* parse_tokens(const char* str)
     return tokens;
 }
 
-int strpref(const char *str, const char *pref)
+// TODO: has_prefix?
+int strpref(const char *str, const char *pref) // TODO: please, use normal names for your functions!
 {
     return strncasecmp(str, pref, strlen(pref)) == 0;
 }

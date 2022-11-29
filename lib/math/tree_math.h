@@ -3,6 +3,8 @@
 
 #include "ast.h"
 
+
+// TODO: make docs
 syntax_tree* derivative(syntax_tree* ast, const char* var);
 
 void simplify(syntax_tree* ast);

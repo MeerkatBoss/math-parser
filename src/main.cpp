@@ -15,7 +15,7 @@ int main()
         .stream = stdout,
         .logging_level = LOG_ERROR,
         .settings_mask = LGS_KEEP_OPEN | LGS_USE_ESCAPE
-    });
+    }); // TODO: can this be in default logger?
 
     compact_list* tokens = parse_tokens("(x + 1)^{\\frac{\\sin x}{2}} \\cdot (\\arctan \\sqrt{x^2 + 1})^{x - 2}");
     syntax_tree* ast = build_tree(tokens);

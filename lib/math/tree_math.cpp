@@ -8,11 +8,11 @@
 static const double EPS = 1e-6;
 
 static ast_node* copy_tree(ast_node* node);
-static ast_node* differential(ast_node* node, size_t var_id);
+static ast_node* differential(ast_node* node, size_t var_id); // TODO: naming? add a verb!
 static void simplify_node(ast_node* node);
 static int is_const(ast_node* node, size_t var_id);
-static ast_node* value_at_position(ast_node* node, size_t var_id, double val);
-static inline long long factorial(long long n)
+static ast_node* value_at_position(ast_node* node, size_t var_id, double val); // TODO: add a verb, namiiing
+static inline long long factorial(long long n) // TODO: extract! not tree-math, just math.h!
 {
     long long res = 1;
     for (long long i = 1; i <= n; i++)
@@ -20,11 +20,13 @@ static inline long long factorial(long long n)
     return res;
 }
 
+// static factorial(int n) { return (n == 0 || n == 1) ? 1 : factorial(n - 1) * n; }
+
 syntax_tree* derivative(syntax_tree * ast, const char * var)
 {
     size_t var_id = ast->var_cnt;
     for (size_t i = 0; i < ast->var_cnt; i++)
-        if (strcmp(var, ast->vars[i]) == 0)
+        if (strcmp(var, ast->vars[i]) == 0) // TODO: cheto takoe videl uze, extract!!
             var_id = i;
     LOG_ASSERT_ERROR(var_id < ast->var_cnt, return NULL,
         "Variable '%s' was not defined", var);
@@ -32,7 +34,7 @@ syntax_tree* derivative(syntax_tree * ast, const char * var)
     syntax_tree* result = tree_ctor();
     result->var_cnt = ast->var_cnt;
     for (size_t i = 0; i < ast->var_cnt; i++)
-        result->vars[i] = strdup(ast->vars[i]);
+        result->vars[i] = strdup(ast->vars[i]); // TODO: many bukva, malo smisla, extract!
     
     result->root = differential(ast->root, var_id);
     simplify(result);
@@ -45,6 +47,8 @@ void simplify(syntax_tree * ast)
     simplify_node(ast->root);
 }
 
+
+// TODO: I died over macro overexposure
 #define LEFT node->left
 #define RIGHT node->right
 #define NUM(n) make_number_node(n)
@@ -66,7 +70,7 @@ syntax_tree * maclaurin_series(syntax_tree * ast, const char * var, int pow)
 {
     size_t var_id = ast->var_cnt;
     for (size_t i = 0; i < ast->var_cnt; i++)
-        if (strcmp(var, ast->vars[i]) == 0)
+        if (strcmp(var, ast->vars[i]) == 0) // TODO: mnoga bukov malo smisla
             var_id = i;
     LOG_ASSERT_ERROR(var_id < ast->var_cnt, return NULL,
         "Variable '%s' was not defined", var);
@@ -74,7 +78,7 @@ syntax_tree * maclaurin_series(syntax_tree * ast, const char * var, int pow)
     syntax_tree* result = tree_ctor();
     result->var_cnt = ast->var_cnt;
     for (size_t i = 0; i < ast->var_cnt; i++)
-        result->vars[i] = strdup(ast->vars[i]);
+        result->vars[i] = strdup(ast->vars[i]); // TODO: mnoga bukov malo smisla
     result->root = NUM(0);
     
     ast_node* cur = CPY(ast->root);
@@ -129,7 +133,7 @@ static ast_node * differential(ast_node * node, size_t var_id)
             return MUL(diff, D(RIGHT));
 
     switch(node->value.op)
-    {
+    { // TODO: codgen?
         case OP_ADD:
             return ADD(D(LEFT), D(RIGHT));
         case OP_SUB:
@@ -203,7 +207,8 @@ static void simplify_negative(ast_node* node);
 static void simplify_func(ast_node* node);
 static void simplify_fraction(ast_node* node);
 static void simplify_power(ast_node* node);
-static void replace_with(ast_node* dest, ast_node* src);
+
+static void replace_with(ast_node* dest, ast_node* src); // TODO: vnezapno (add space, please) done
 
 static void simplify_node(ast_node * node)
 {
@@ -244,7 +249,7 @@ static void simplify_node(ast_node * node)
 
 static int is_const(ast_node * node, size_t var_id)
 {
-    if (!node) return 1;
+    if (!node) return 1; // TODO: logica died (cringe) vozmozno ne ispravit no cringe
     if (node->type == T_NUM)
         return 1;
     if (node->type == T_VAR)
@@ -252,6 +257,7 @@ static int is_const(ast_node * node, size_t var_id)
     return is_const(node->left, var_id) && is_const(node->right, var_id);
 }
 
+// TODO: partial_evaluate? naming?
 ast_node * value_at_position(ast_node * node, size_t var_id, double val)
 {
     if (!node) return NULL;
@@ -267,6 +273,7 @@ ast_node * value_at_position(ast_node * node, size_t var_id, double val)
     return copy;
 }
 
+// TODO: dispatch simplifications based on children, not on operations types
 static void simplify_sum(ast_node * node)
 {
     if (node->left ->type == T_NUM &&
@@ -274,7 +281,7 @@ static void simplify_sum(ast_node * node)
     {
         node->type = T_NUM;
         double l = node->left ->value.num;
-        double r = node->right->value.num;
+        double r = node->right->value.num; // TODO: this seems very common, extract (is_exactly_representable to avoid simplifications of e.g. sin)
         if (node->value.op == OP_ADD)
             node->value.num = l + r;
         else
@@ -308,7 +315,7 @@ static void simplify_sum(ast_node * node)
     }
 
     if (node->left->type == T_NUM && fabs(node->left->value.num) < EPS)
-    {
+    { // TODO:                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ this is a function!!
         delete_node(node->left);
         node->left = NULL;
 
@@ -345,7 +352,7 @@ static void simplify_sum(ast_node * node)
         return;
     }
     if (node->left ->type == T_OP && node->left ->value.op == OP_NEG)
-    {
+    { // TODO: C-c C-v? Capec, fix your alignment universally
         replace_with(node-> left, node->left ->right);
         if (node->value.op == OP_SUB)
         {
@@ -534,7 +541,7 @@ void simplify_func(ast_node * node)
     }
     if (node->value.op == OP_SIN || node->value.op == OP_ARCSIN ||
         node->value.op == OP_TAN || node->value.op == OP_ARCTAN  ||
-        node->value.op == OP_COT || node->value.op == OP_ARCCOT)
+        node->value.op == OP_COT || node->value.op == OP_ARCCOT) // TODO: DSL function properties?
     {
         if(node->right->type == T_OP && node->right->value.op == OP_NEG)
         {
@@ -571,7 +578,7 @@ void simplify_func(ast_node * node)
 void simplify_fraction(ast_node * node)
 {
     if (node->left ->type == T_NUM &&
-        node->right->type == T_NUM)
+        node->right->type == T_NUM) // TODO: yes, more, more, more, MOOOORE
     {
         node->type = T_NUM;
         double l = node->left ->value.num;
@@ -608,9 +615,9 @@ void simplify_fraction(ast_node * node)
         return;
     }
     if (node->right->type == T_NUM && fabs(node->right->value.num + 1) < EPS)
-    {
+    { // TODO:                                               is_equal
         delete_node(node->right);
-        node->right = node->left;
+        node->right = node->left; // TODO: extract
         node->left = NULL;
 
         node->value.op = OP_NEG;
@@ -636,7 +643,7 @@ void simplify_power(ast_node * node)
         node->type = T_NUM;
         double l = node->left ->value.num;
         double r = node->right->value.num;
-        node->value.num = pow(l, r);
+        node->value.num = pow(l, r); // TODO: tozhe samoe
 
         delete_node(node->left);
         delete_node(node->right);
@@ -648,7 +655,7 @@ void simplify_power(ast_node * node)
     if (node->left ->type == T_NUM && fabs(node->left ->value.num) < EPS)
     {
         delete_node(node->left);
-        delete_subtree(node->right);
+        delete_subtree(node->right); // TODO: tozhe samoe, 7 raz
         node->left = NULL;
         node->right = NULL;
 
@@ -673,7 +680,7 @@ void simplify_power(ast_node * node)
         return;
     }
     if (node->right->type == T_NUM && node->left->type == T_OP &&
-        node->left->value.op == OP_NEG)
+        node->left->value.op == OP_NEG) // TODO: slozno capec
     {
         int pw = round(node->right->value.num);
         if (fabs(node->right->value.num - pw) >= EPS)
@@ -693,11 +700,14 @@ void simplify_power(ast_node * node)
         node->right = node->left;
         node->left = NULL;
         node->value.op = OP_NEG;
+
+
+        // TODO: write example here
         return;
     }
 }
 
-static void replace_with(ast_node * dest, ast_node * src)
+static void replace_with(ast_node * dest, ast_node * src) // TODO: you lost it after the first extraction, haven't you?
 {
     dest->left  = src->left;
     dest->right = src->right;

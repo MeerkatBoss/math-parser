@@ -162,10 +162,11 @@ ast_node* tree_end(syntax_tree* tree)
     return node;
 }
 
-static void print_node(
+static void print_node( // TODO: what is this alignment?
                     const ast_node* node,
                     const syntax_tree* ast,
                     const ast_node* dictionary['Z'-'A'+1],
+                    // TODO:                   ^~~~~~~~~ make this a constant, please!
                     FILE* stream);
 static int requires_grouping(const ast_node* parent, const ast_node* child);
 static int is_unary(op_type op);
@@ -175,24 +176,24 @@ static char get_definition(const ast_node* node, const ast_node* dictionary['Z'-
 
 void print_tree(const syntax_tree * ast, FILE * stream)
 {
-    const ast_node* dictionary['Z'-'A'+1] = {};
+    const ast_node* dictionary['Z'-'A'+1] = {}; // TODO: same
     extract_blocks(ast->root, dictionary);
 
     char short_root = get_definition(ast->root, dictionary);
-    if (short_root != '\0')
+    if (short_root != '\0') // TODO: proshe napisat vot zdes costil' na meste i vse
         dictionary[short_root - 'A'] = NULL;
 
     fprintf(stream, "\\begin{equation}\n");
     print_node(ast->root, ast, dictionary, stream);
     fprintf(stream, "\n\\end{equation}\n\n");
-    if (dictionary[0])
+    if (dictionary[0]) // TODO: Explain yourself! Bool variable? Leak of extract_blocks algorithm to outer function!
     {
         fprintf(stream, "Where:\n"
                         "\\begin{itemize}\n");
         for (char i = 'A'; i <= 'Z' && dictionary[i - 'A'] != NULL; i++)
         {
             fprintf(stream, "\t\\item $%c = ", i);
-            const ast_node* def = dictionary[i - 'A'];
+            const ast_node* def = dictionary[i - 'A']; // TODO: YESS, YEEEESSS MORE - 'A'
             dictionary[i - 'A'] = NULL;
             print_node(def, ast, dictionary, stream);
             dictionary[i - 'A'] = def;
@@ -215,7 +216,7 @@ static void print_node(
         return;
     }
 
-    if (node->type == T_NUM)
+    if (node->type == T_NUM) // TODO: switch?
     {
         fprintf(stream, "%g ", node->value.num);
         return;
@@ -231,7 +232,7 @@ static void print_node(
         fprintf(stream, "%s ", ast->vars[node->value.var_id]);
         return;
     }
-    if (node->value.op == OP_DIV)
+    if (node->value.op == OP_DIV /* TODO: long names looooong naaaaameeesss (use them) */)
     {
         fprintf(stream, "\\frac{");
         print_node(node->left, ast, dictionary, stream);
@@ -276,6 +277,8 @@ static int requires_grouping(const ast_node * parent, const ast_node * child)
 
     op_type child_op = child->value.op;
 
+
+    // TODO: Clang?????? WHERE IS MY BELOVED CLANG???!!! I CAN'T!!
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wswitch-enum"
     switch (parent->value.op)
@@ -312,7 +315,7 @@ static int is_unary(op_type op)
 static void print_op(op_type op, FILE* stream)
 {
     switch (op)
-    {
+    { // TODO: alignment is trash, maaaan
         case OP_ADD: fprintf(stream, "+ ");         return;
         case OP_SUB: fprintf(stream, "- ");         return;
         case OP_MUL: fprintf(stream, "\\cdot ");    return;
@@ -334,9 +337,10 @@ static void print_op(op_type op, FILE* stream)
     LOG_ASSERT(0 && "Unreachable code", return);
 }
 
+// TODO:                                                   this is not dictionary! (labeled_subexpression?)
 int extract_blocks(const ast_node * node, const ast_node * dictionary['Z'-'A'+ 1])
-{
-    const int MAX_SIZE = 24;
+{ // TODO: label block? namiiiiinnggggg
+    const int MAX_SIZE = 24; // TODO: MAX_SIZE of what?
     if (!node) return 0;
     int size = extract_blocks(node->left, dictionary)
                 + extract_blocks(node->right, dictionary) + 1;
@@ -347,6 +351,7 @@ int extract_blocks(const ast_node * node, const ast_node * dictionary['Z'-'A'+ 1
         {
             if (dictionary[i - 'A']) continue;
             dictionary[i - 'A'] = node;
+            // TODO:   ^~~~~~~ make a function?
             found = 1;
             break;
         }
@@ -357,6 +362,7 @@ int extract_blocks(const ast_node * node, const ast_node * dictionary['Z'-'A'+ 1
     return size;
 }
 
+// TODO: namiiiiinnggggg, get_label_of_expression?
 char get_definition(const ast_node * node, const ast_node * dictionary['Z'-'A'+ 1])
 {
     for (char i = 'A'; i <= 'Z' && dictionary[i - 'A']; i++)

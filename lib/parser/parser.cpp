@@ -8,7 +8,7 @@ struct parsing_state
 {
     const compact_list* tokens;
     list_iterator pos;
-    size_t var_cnt;
+    size_t var_cnt; // TODO: please, have mercy
     char** vars;
 };
 
@@ -74,7 +74,7 @@ syntax_tree* build_tree(const compact_list * tokens)
     return ast;
 }
 
-static ast_node* parse_sum(parsing_state* state)
+static ast_node* parse_sum(parsing_state* state) // TODO: rename? parse_expression?
 {
     ast_node* left = parse_product(state);
     while(consume_check(state, TOK_PLUS) || consume_check(state, TOK_MINUS))
@@ -111,7 +111,7 @@ ast_node * parse_unary(parsing_state * state)
             return make_unary_node(OP_##name, parse_unary(state));
     
     #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wswitch-enum"
+    #pragma GCC diagnostic ignored "-Wswitch-enum" // TODO: eh
     switch (current_token(state)->type)
     {
     case TOK_MINUS:
@@ -171,6 +171,7 @@ ast_node * parse_group(parsing_state * state)
         return parse_atom(state);
     
     token_type l_paren = last_token(state)->type;
+    //         l_  TODO: namiiiing, left?
 
     ast_node* expr = parse_sum(state);
 
@@ -180,8 +181,8 @@ ast_node * parse_group(parsing_state * state)
             "Expected '}'.", NULL);
     if (l_paren == TOK_LPAREN)
         LOG_ASSERT_ERROR(consume_check(state, TOK_RPAREN),
-            { delete_subtree(expr); return NULL;},
-            "Expected '}'.", NULL);
+            { delete_subtree(expr); return NULL;}, // TODO: think if you can make this smaller?
+            "Expected '}'.", NULL);                //       make your code descriptive, please!
     
     return expr;
 }
@@ -205,7 +206,7 @@ ast_node * parse_atom(parsing_state * state)
 size_t get_var_id(parsing_state * state, const char * name)
 {
     for (size_t i = 0; i < state->var_cnt; i++)
-        if (strcmp(name, state->vars[i]) == 0)
+        if (strcmp(name, state->vars[i]) == 0) // TODO: cringe, but i understand
             return i;
     LOG_ASSERT_ERROR(state->var_cnt < MAX_VARS, return (size_t)-1,
                         "Too many variables in an expression", NULL);
