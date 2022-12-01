@@ -19,15 +19,15 @@
  */
 enum node_type
 {
-    T_NUM, // TODO: improve naming! NODE_NUM? NODE_TYPE_NUM?
-    T_VAR,
-    T_OP
+    NODE_NUM,
+    NODE_VAR,
+    NODE_OP
 };
 
 #define MATH_FUNC(name, ...) OP_##name,
 
 /**
- * @brief Operation type for AST nodes of type `T_OP`
+ * @brief Operation type for AST nodes of type `NODE_OP`
  */
 enum op_type
 {
@@ -79,6 +79,8 @@ struct ast_node
     ast_node*   right;
 };
 
+typedef ast_node* tree_iterator;
+
 /**
  * @brief Maximum allowed number of variables in expression
  */
@@ -87,7 +89,7 @@ const size_t MAX_VARS = 16;
 /**
  * @brief Abstract syntax tree
  */
-struct syntax_tree // TODO: ast_node therefore abstract_syntax_tree? ass_tree?
+struct abstract_syntax_tree
 {
     /**
      * @brief Tree root node
@@ -104,10 +106,8 @@ struct syntax_tree // TODO: ast_node therefore abstract_syntax_tree? ass_tree?
     char*       vars[MAX_VARS]; // TODO: make dynamic
 };
 
-// TODO: define_stack(int) ?
-
 /**
- * @brief Create new tree node with specified parent // TODO: explain what happens to children!
+ * @brief Create new tree node with specified parent and no children.
  * 
  * @param[in] data Data stored in node
  * @param[in] parent Parent node
@@ -149,11 +149,13 @@ ast_node* make_number_node(double val);
 ast_node* make_var_node(size_t id);
 
 /**
- * @brief Delete created node. Free associated resources // TODO: explain here!
+ * @brief Delete ast node. Free associated resources.
  * 
  * @param[inout] node `ast_node` instance to be deleted
+ * @warning This function will fail upon attempting to delete node, which has
+ * non-`NULL` children.
  */
-void delete_node(ast_node* node); // TODO: Why do you need this? Make static?
+void delete_node(ast_node* node);
 
 /**
  * @brief Delete subtree of chosen node. Free associated resources.
@@ -163,18 +165,18 @@ void delete_node(ast_node* node); // TODO: Why do you need this? Make static?
 void delete_subtree(ast_node* node);
 
 /**
- * @brief Create `syntax_tree` instance
+ * @brief Create `abstract_syntax_tree` instance
  * 
- * @return Constructed `syntax_tree` instance
+ * @return Constructed `abstract_syntax_tree` instance
  */
-syntax_tree* tree_ctor(void);
+abstract_syntax_tree* tree_ctor(void);
 
 /**
- * @brief Destroy `syntax_tree`
+ * @brief Destroy `abstract_syntax_tree`
  * 
- * @param[inout] tree `syntax_tree` instance to be destroyed
+ * @param[inout] tree `abstract_syntax_tree` instance to be destroyed
  */
-void tree_dtor(syntax_tree* tree);
+void tree_dtor(abstract_syntax_tree* tree);
 
 /**
  * @brief Get iterator to first tree element
@@ -182,15 +184,15 @@ void tree_dtor(syntax_tree* tree);
  * @param[in] tree 
  * @return Tree iterator
  */
-ast_node* tree_begin(syntax_tree* tree);
+tree_iterator tree_begin(abstract_syntax_tree* tree);
 
 /**
- * @brief Get iterator to next tree node // TODO: write about which one is next
+ * @brief Get iterator to next tree node, following in-order traversal.
  * 
  * @param[in] node Current tree node
  * @return Tree iterator
  */
-ast_node* next_iterator(ast_node *node); // TODO: typedef iterator? get_next_iterator? Try to use verbs in function names
+tree_iterator tree_get_next(tree_iterator it);
 
 /**
  * @brief Get iterator to previous tree node
@@ -198,7 +200,7 @@ ast_node* next_iterator(ast_node *node); // TODO: typedef iterator? get_next_ite
  * @param[in] node Current tree node
  * @return Tree iterator
  */
-ast_node* prev_iterator(ast_node *node);
+tree_iterator tree_get_prev(tree_iterator it);
 
 /**
  * @brief Get iterator to last tree element
@@ -206,7 +208,7 @@ ast_node* prev_iterator(ast_node *node);
  * @param[in] tree 
  * @return Tree iterator 
  */
-ast_node* tree_end(syntax_tree* tree);
+tree_iterator tree_end(abstract_syntax_tree* tree);
 
 /**
  * @brief Output tree to specified stream in LaTeX format
@@ -214,6 +216,6 @@ ast_node* tree_end(syntax_tree* tree);
  * @param[in] ast Printed tree
  * @param[in] stream Output stream
  */
-void print_tree(const syntax_tree* ast, FILE* stream);
+void print_tree(const abstract_syntax_tree* ast, FILE* stream);
 
 #endif

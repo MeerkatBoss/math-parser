@@ -50,9 +50,9 @@ static inline int consume_check(parsing_state* state, token_type expected)
     return consume(state, expected)->type == expected;
 }
 
-syntax_tree* build_tree(const compact_list * tokens)
+abstract_syntax_tree* build_tree(const compact_list * tokens)
 {
-    syntax_tree* ast = tree_ctor();
+    abstract_syntax_tree* ast = tree_ctor();
     parsing_state state = {
         .tokens  = tokens,
         .pos     = list_begin(tokens),
@@ -170,16 +170,15 @@ ast_node * parse_group(parsing_state * state)
     if (!consume_check(state, TOK_LBRACKET) && !consume_check(state, TOK_LPAREN))
         return parse_atom(state);
     
-    token_type l_paren = last_token(state)->type;
-    //         l_  TODO: namiiiing, left?
+    token_type left_paren = last_token(state)->type;
 
     ast_node* expr = parse_sum(state);
 
-    if (l_paren == TOK_LBRACKET)
+    if (left_paren == TOK_LBRACKET)
         LOG_ASSERT_ERROR(consume_check(state, TOK_RBRACKET),
             { delete_subtree(expr); return NULL;},
             "Expected '}'.", NULL);
-    if (l_paren == TOK_LPAREN)
+    if (left_paren == TOK_LPAREN)
         LOG_ASSERT_ERROR(consume_check(state, TOK_RPAREN),
             { delete_subtree(expr); return NULL;}, // TODO: think if you can make this smaller?
             "Expected '}'.", NULL);                //       make your code descriptive, please!
@@ -206,7 +205,7 @@ ast_node * parse_atom(parsing_state * state)
 size_t get_var_id(parsing_state * state, const char * name)
 {
     for (size_t i = 0; i < state->var_cnt; i++)
-        if (strcmp(name, state->vars[i]) == 0) // TODO: cringe, but i understand
+        if (strcmp(name, state->vars[i]) == 0)
             return i;
     LOG_ASSERT_ERROR(state->var_cnt < MAX_VARS, return (size_t)-1,
                         "Too many variables in an expression", NULL);

@@ -6,7 +6,7 @@
 
 #include "lexer.h"
 
-static int strpref(const char* str1, const char* str2);
+static int has_prefix(const char* str1, const char* str2);
 
 compact_list* parse_tokens(const char* str)
 {
@@ -20,23 +20,25 @@ compact_list* parse_tokens(const char* str)
 
         if(!*str) break;
 
-        double number = 0;
-        int n_read = 0;
         
-        if(sscanf(str, " %lg %n", &number, &n_read) == 1) // TODO: scanf in lexer cringe
+
+        char* next_char = NULL;
+        double number = strtod(str, &next_char);
+        
+        if(next_char != NULL)
         {
             push_back(tokens, {.type = TOK_NUM, .value = {.num = number}});
-            str += n_read;
+            str = next_char;
             continue;
         }
         
         switch (*(str++))
         {
-        case '+': push_back(tokens, {.type = TOK_PLUS});   continue;
-        case '-': push_back(tokens, {.type = TOK_MINUS});  continue;
-        case '^': push_back(tokens, {.type = TOK_CARET});  continue;
-        case '(': push_back(tokens, {.type = TOK_LPAREN}); continue;
-        case ')': push_back(tokens, {.type = TOK_RPAREN}); continue; // TODO: alignment kills me (sad)
+        case '+': push_back(tokens, {.type = TOK_PLUS});     continue;
+        case '-': push_back(tokens, {.type = TOK_MINUS});    continue;
+        case '^': push_back(tokens, {.type = TOK_CARET});    continue;
+        case '(': push_back(tokens, {.type = TOK_LPAREN});   continue;
+        case ')': push_back(tokens, {.type = TOK_RPAREN});   continue;
         case '{': push_back(tokens, {.type = TOK_LBRACKET}); continue;
         case '}': push_back(tokens, {.type = TOK_RBRACKET}); continue;
 
@@ -46,7 +48,7 @@ compact_list* parse_tokens(const char* str)
         }
 
         #define MATH_FUNC(name, ...)                        \
-            if(strpref(str, "\\"#name))                     \
+            if(has_prefix(str, "\\"#name))                     \
             {                                               \
                 str += sizeof("\\"#name)/sizeof(char) - 1;  \
                 push_back(tokens, {.type = TOK_##name});    \
@@ -61,6 +63,7 @@ compact_list* parse_tokens(const char* str)
 
         token tok = {.type = TOK_VAR, .value = {.name = NULL}};        
 
+        int n_read = 0;
         LOG_ASSERT_ERROR(
             sscanf(str, " %32m[\\A-Za-z_] %n", &tok.value.name, &n_read) == 1,
             {
@@ -79,8 +82,7 @@ compact_list* parse_tokens(const char* str)
     return tokens;
 }
 
-// TODO: has_prefix?
-int strpref(const char *str, const char *pref) // TODO: please, use normal names for your functions!
+int has_prefix(const char *str, const char *pref)
 {
     return strncasecmp(str, pref, strlen(pref)) == 0;
 }

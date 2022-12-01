@@ -10,6 +10,6 @@
  * @param[in] tokens Token list
  * @return Built AST
  */
-syntax_tree* build_tree(const compact_list* tokens);
+abstract_syntax_tree* build_tree(const compact_list* tokens);
 
 #endif

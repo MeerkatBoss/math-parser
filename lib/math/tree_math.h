@@ -5,10 +5,10 @@
 
 
 // TODO: make docs
-syntax_tree* derivative(syntax_tree* ast, const char* var);
+abstract_syntax_tree* derivative(abstract_syntax_tree* ast, const char* var);
 
-void simplify(syntax_tree* ast);
+void simplify(abstract_syntax_tree* ast);
 
-syntax_tree* maclaurin_series(syntax_tree* ast, const char* var, int pow);
+abstract_syntax_tree* maclaurin_series(abstract_syntax_tree* ast, const char* var, int pow);
 
 #endif
