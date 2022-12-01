@@ -47,6 +47,19 @@ ast_node * make_var_node(size_t id)
     return make_node(NODE_NUM, {.var_id = id});
 }
 
+ast_node* copy_tree(ast_node * node)
+{
+    if (!node) return NULL;
+
+    ast_node* res = make_node(node->type, node->value);
+    res->left   = copy_tree(node->left);
+    res->right  = copy_tree(node->right);
+    if (res-> left) res-> left->parent = res;
+    if (res->right) res->right->parent = res;
+
+    return res;
+}
+
 void delete_node(ast_node* node)
 {
     LOG_ASSERT(node != NULL, return);
@@ -290,9 +303,6 @@ static int requires_grouping(const ast_node * parent, const ast_node * child)
 
     op_type child_op = child->value.op;
 
-
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wswitch-enum"
     switch (parent->value.op)
     {
     case OP_ADD:
@@ -310,7 +320,6 @@ static int requires_grouping(const ast_node * parent, const ast_node * child)
     default:
         return child_op == OP_ADD || child_op == OP_SUB;
     }
-    #pragma GCC diagnostic pop
 
     LOG_ASSERT(0 && "Unreachable code", return 0);
 }

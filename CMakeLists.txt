@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}-D _DEBUG -ggdb3 -std=c++2a -O0 -Wall -We
     -Woverloaded-virtual -Wpacked -Wpointer-arith -Winit-self -Wredundant-decls -Wshadow\
     -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=2\
     -Wsuggest-attribute=noreturn -Wsuggest-final-methods -Wsuggest-final-types\
-    -Wsuggest-override -Wswitch-default -Wswitch-enum -Wsync-nand -Wundef -Wunreachable-code\
+    -Wsuggest-override -Wswitch-default -Wsync-nand -Wundef -Wunreachable-code\
     -Wunused -Wuseless-cast -Wvariadic-macros -Wno-literal-suffix -Wno-missing-field-initializers\
     -Wno-narrowing -Wno-old-style-cast -Wno-varargs -Wstack-protector\
     -fcheck-new -fsized-deallocation -fstack-check\
@@ -31,7 +31,7 @@ set(CMAKE_LINKER_FLAGS "${CMAKE_CXX_FLAGS}-D _DEBUG -ggdb3 -std=c++2a -O0 -Wall 
     -Woverloaded-virtual -Wpacked -Wpointer-arith -Winit-self -Wredundant-decls -Wshadow\
     -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=2\
     -Wsuggest-attribute=noreturn -Wsuggest-final-methods -Wsuggest-final-types\
-    -Wsuggest-override -Wswitch-default -Wswitch-enum -Wsync-nand -Wundef -Wunreachable-code\
+    -Wsuggest-override -Wswitch-default -Wsync-nand -Wundef -Wunreachable-code\
     -Wunused -Wuseless-cast -Wvariadic-macros -Wno-literal-suffix -Wno-missing-field-initializers\
     -Wno-narrowing -Wno-old-style-cast -Wno-varargs -Wstack-protector\
     -fcheck-new -fsized-deallocation -fstack-check\
@@ -40,6 +40,8 @@ set(CMAKE_LINKER_FLAGS "${CMAKE_CXX_FLAGS}-D _DEBUG -ggdb3 -std=c++2a -O0 -Wall 
     -pie -Wlarger-than=8192 -Wstack-usage=8192") 
 
 add_subdirectory(lib/logger)
+
+add_subdirectory(lib/math_utils)
 
 add_subdirectory(lib/list)
 

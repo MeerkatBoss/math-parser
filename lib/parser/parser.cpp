@@ -109,9 +109,7 @@ ast_node * parse_unary(parsing_state * state)
         case TOK_##name:                                            \
             advance(state);                                         \
             return make_unary_node(OP_##name, parse_unary(state));
-    
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wswitch-enum" // TODO: eh
+
     switch (current_token(state)->type)
     {
     case TOK_MINUS:
@@ -123,7 +121,6 @@ ast_node * parse_unary(parsing_state * state)
     default:
         return parse_fraction(state);
     }
-    #pragma GCC diagnostic pop
 
     LOG_ASSERT(0 && "Unreachable code", return NULL);
 }

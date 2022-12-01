@@ -14,6 +14,8 @@
 
 #include <stddef.h>
 
+#include "math_utils.h"
+
 /**
  * @brief AST node type
  */
@@ -78,6 +80,20 @@ struct ast_node
      */
     ast_node*   right;
 };
+
+/* TODO: docs */
+
+inline double  get_num(ast_node* node)             { return node->value.num; }
+inline int     is_num (ast_node* node)             { return node && node->type == NODE_NUM;}
+inline int     num_cmp(ast_node* node, double num) { return is_num(node) && compare_double(get_num(node), num); }
+
+inline op_type get_op (ast_node* node)             { return node->value.op; }
+inline int     is_op  (ast_node* node)             { return node && node->type == NODE_OP; }
+inline int     op_cmp (ast_node* node, op_type op) { return is_op(node) && get_op(node) == op; }
+
+inline size_t  get_var(ast_node* node)             { return node->value.var_id; }
+inline int     is_var (ast_node* node)             { return node && node->type == NODE_VAR; }
+inline int     var_cmp(ast_node* node, size_t op)  { return is_var(node) && get_var(node) == op; }
 
 typedef ast_node* tree_iterator;
 
@@ -147,6 +163,10 @@ ast_node* make_number_node(double val);
  * @return Created node
  */
 ast_node* make_var_node(size_t id);
+
+/* TODO: docs */ 
+
+ast_node* copy_tree(ast_node* node);
 
 /**
  * @brief Delete ast node. Free associated resources.
