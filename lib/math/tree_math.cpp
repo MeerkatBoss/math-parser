@@ -182,15 +182,26 @@ static ast_node* get_differential(ast_node * node, size_t var_id)
 
 static void replace_with(ast_node* dest, ast_node* src);
 
-static inline int is_neg    (ast_node* node) { return op_cmp(node, OP_NEG); }
-static inline int is_neutral(ast_node* node) { return num_cmp(node, 0) || num_cmp(node, 1); }
+static inline int is_neg (ast_node* node) { return op_cmp(node, OP_NEG); }
+static inline int is_zero(ast_node* node) { return num_cmp(node, 0); }
+static inline int is_one (ast_node* node) { return num_cmp(node, 1); }
+static inline int get_int(ast_node* node) { return (int) round(get_num(node)); }
+static inline int is_int (ast_node* node) { return num_cmp(node, get_int(node)); }
 
-static void extract_negative(ast_node* node);
-static void extract_left_negative(ast_node* node);
+static inline int is_same_var(ast_node* node1, ast_node* node2)
+{
+    return is_var(node1) && var_cmp(node2, get_var(node1));
+}
+
+static void extract_negative      (ast_node* node);
+static void extract_left_negative (ast_node* node);
 static void extract_right_negative(ast_node* node);
-static void extract_left_neutral(ast_node* node);
-static void extract_right_neutral(ast_node* node);
-static void collapse_const(ast_node* node);
+static void extract_left_zero     (ast_node* node);
+static void extract_right_zero    (ast_node* node);
+static void extract_left_one      (ast_node* node);
+static void extract_right_one     (ast_node* node);
+static void collapse_var          (ast_node* node);
+static void collapse_const        (ast_node* node);
 
 static void simplify_node(ast_node * node)
 {
@@ -204,8 +215,11 @@ static void simplify_node(ast_node * node)
     if (is_neg(LEFT) && is_neg(RIGHT)) extract_negative      (node);
     if (is_neg(LEFT))                  extract_left_negative (node);
     if (is_neg(RIGHT))                 extract_right_negative(node);
-    if (is_neutral(LEFT))              extract_left_neutral  (node);
-    if (is_neutral(RIGHT))             extract_right_neutral (node);
+    if (is_zero(LEFT))                 extract_left_zero     (node);
+    if (is_zero(RIGHT))                extract_right_zero    (node);
+    if (is_one(LEFT))                  extract_left_one      (node);
+    if (is_one(RIGHT))                 extract_right_one     (node);
+    if (is_same_var(LEFT, RIGHT))      collapse_var          (node);
 }
 
 static int is_const(ast_node * node, size_t var_id)
@@ -232,6 +246,7 @@ ast_node* evaluate_partially(ast_node* node, size_t var_id, double val)
 
     return copy;
 }
+
 static void replace_with(ast_node* dest, ast_node* src)
 {
     dest->left  = src->left;
@@ -279,7 +294,7 @@ static void collapse_const(ast_node* node)
     #undef COMBINE_CHILDREN
 }
 
-void extract_negative(ast_node * node)
+void extract_negative(ast_node* node)
 {
     LOG_ASSERT(node, return);
     if (is_num(node) && get_num(node) < 0)
@@ -309,6 +324,189 @@ void extract_negative(ast_node * node)
     case OP_DIV:
         replace_with(LEFT,  LEFT ->right);
         replace_with(RIGHT, RIGHT->right);
+        break;
+    default:
+        break;
+    }
+}
+
+static void extract_left_negative(ast_node* node)
+{
+    LOG_ASSERT(is_op(node), return);
+    LOG_ASSERT(op_cmp(LEFT, OP_NEG), return);
+
+    switch(get_op(node))
+    {
+    case OP_ADD:
+        replace_with(node, SUB(RIGHT, LEFT));
+        break;
+    case OP_SUB:
+        replace_with(node, NEG(ADD(LEFT, RIGHT)));
+        break;
+    case OP_MUL:
+    case OP_DIV:
+        replace_with(LEFT, LEFT->right);
+        replace_with(node, NEG(
+            make_binary_node(
+                get_op(node),
+                LEFT,
+                RIGHT)));
+        break;
+    case OP_POW:
+        if (!is_int(RIGHT)) break;
+        replace_with(LEFT, LEFT->right);
+        if (get_int(RIGHT) % 2 == 1)
+            replace_with(node, NEG(POW(LEFT, RIGHT)));
+        break;
+    default:
+        break;
+    }
+}
+
+static void extract_right_negative(ast_node* node)
+{
+    LOG_ASSERT(is_op(node), return);
+    LOG_ASSERT(op_cmp(RIGHT, OP_NEG), return);
+
+    switch (get_op(node))
+    {
+    case OP_ADD:
+        replace_with(node, SUB(LEFT, RIGHT));
+        break;;
+    case OP_SUB:
+        replace_with(node, ADD(LEFT, RIGHT));
+        break;
+    case OP_MUL:
+    case OP_DIV:
+        replace_with(RIGHT, RIGHT->right);
+        replace_with(node, NEG(
+            make_binary_node(
+                get_op(node),
+                LEFT,
+                RIGHT)));
+        break;
+    case OP_NEG:
+        replace_with(RIGHT, RIGHT->right);
+        replace_with(node, RIGHT);
+        break;
+    case OP_SIN:
+    case OP_ARCSIN:
+    case OP_TAN:
+    case OP_ARCTAN:
+        replace_with(node, NEG(
+            make_unary_node(
+                get_op(node),
+                RIGHT)));
+    case OP_COS:
+        replace_with(RIGHT, RIGHT->right);
+        break;
+    default:
+        break;
+    }
+
+}
+
+void extract_left_zero(ast_node* node)
+{
+    LOG_ASSERT(is_op(node), return);
+    LOG_ASSERT(is_zero(LEFT), return);
+
+    switch(get_op(node))
+    {
+    case OP_ADD:              replace_with(node, RIGHT);      break;
+    case OP_SUB:              replace_with(node, NEG(RIGHT)); break;
+    case OP_MUL: case OP_DIV: ASSIGN_NODE(0);                 break;
+    default:                                                  break;
+    }
+}
+
+void extract_right_zero(ast_node* node)
+{
+    LOG_ASSERT(is_op(node), return);
+    LOG_ASSERT(is_zero(RIGHT), return);
+    LOG_ASSERT_ERROR(!op_cmp(node, OP_DIV), return, "Division by zero", NULL);
+    LOG_ASSERT_ERROR(!op_cmp(node, OP_LN), return, "Logarithm of zero is undefined", NULL);
+
+    switch (get_op(node))
+    {
+    case OP_ADD:
+    case OP_SUB:
+        replace_with(node, LEFT);
+        break;
+    case OP_MUL:
+    case OP_NEG:
+    case OP_SIN:
+    case OP_TAN:
+    case OP_SQRT:
+    case OP_ARCSIN:
+    case OP_ARCTAN:
+        assign_num(node, 0);
+        break;
+    case OP_POW:
+    case OP_COS:
+        assign_num(node, 1);
+        break;
+    default:
+        break;
+    }
+}
+
+void extract_left_one(ast_node *node)
+{
+    LOG_ASSERT(is_op(node), return);
+    LOG_ASSERT(is_one(LEFT), return);
+
+    switch (get_op(node))
+    {
+    case OP_MUL: replace_with(node, RIGHT); break;
+    case OP_POW: assign_num  (node, 1);     break;
+    default:                                break;
+    }
+}
+
+void extract_right_one(ast_node *node)
+{
+    LOG_ASSERT(is_op(node), return);
+    LOG_ASSERT(is_one(RIGHT), return);
+
+    switch (get_op(node))
+    {
+    case OP_MUL:
+    case OP_DIV:
+    case OP_POW:
+        replace_with(node, LEFT);
+        break;
+    case OP_LN:
+        assign_num(node, 0);
+        break;
+    case OP_SQRT:
+        assign_num(node, 1);
+        break;
+    default:
+        break;
+    }
+}
+
+void collapse_var(ast_node *node)
+{
+    LOG_ASSERT(is_op(node), return);
+    LOG_ASSERT(is_same_var(LEFT, RIGHT), return);
+
+    switch (get_op(node))
+    {
+    case OP_ADD:
+        delete_node(LEFT);
+        replace_with(node, MUL(NUM(2), RIGHT));
+        break;
+    case OP_SUB:
+        assign_num(node, 0);
+        break;
+    case OP_MUL:
+        delete_node(RIGHT);
+        replace_with(node, POW(LEFT, NUM(2)));  break;
+        break;
+    case OP_DIV:
+        assign_num(node, 1);
         break;
     default:
         break;

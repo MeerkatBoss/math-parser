@@ -20,14 +20,14 @@ int main()
     compact_list* tokens = parse_tokens("(x + 1)^{\\frac{\\sin x}{2}} \\cdot (\\arctan \\sqrt{x^2 + 1})^{x - 2}");
     abstract_syntax_tree* ast = build_tree(tokens);
     abstract_syntax_tree* deriv = derivative(ast, "x");
-    abstract_syntax_tree* maclaurin = maclaurin_series(ast, "x", 3);
+    // abstract_syntax_tree* maclaurin = maclaurin_series(ast, "x", 3);
 
 
     print_tree(ast, stdout);
     putc('\n', stdout);
     print_tree(deriv, stdout);
     putc('\n', stdout);
-    print_tree(maclaurin, stdout);
+    // print_tree(maclaurin, stdout);
     putc('\n', stdout);
 
     for (list_iterator it = list_begin(tokens);
@@ -42,6 +42,6 @@ int main()
     free(tokens);
     tree_dtor(ast);
     tree_dtor(deriv);
-    tree_dtor(maclaurin);
+    // tree_dtor(maclaurin);
     return 0;
 }
