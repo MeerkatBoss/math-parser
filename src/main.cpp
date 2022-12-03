@@ -18,7 +18,6 @@ int main()
     }); // TODO: can this be in default logger?
 
     compact_list* tokens = parse_tokens("(x + 1)^{\\frac{\\sin x}{2}} \\cdot (\\arctan \\sqrt{x^2 + 1})^{x - 2}");
-    // compact_list* tokens = parse_tokens("(\\arctan (x + 1))^{x - 2}");
     abstract_syntax_tree* ast = build_tree(tokens);
     abstract_syntax_tree* deriv = derivative(ast, "x");
     abstract_syntax_tree* maclaurin = maclaurin_series(ast, "x", 3);

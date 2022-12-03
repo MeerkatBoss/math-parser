@@ -43,6 +43,8 @@ add_subdirectory(lib/logger)
 
 add_subdirectory(lib/math_utils)
 
+add_subdirectory(lib/dynamic_array)
+
 add_subdirectory(lib/list)
 
 add_subdirectory(lib/lexer)

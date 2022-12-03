@@ -114,7 +114,7 @@ static ast_node* get_differential(ast_node * node, size_t var_id)
             return MUL(diff, D(RIGHT));
 
     switch(node->value.op)
-    { // TODO: codgen?
+    {
         case OP_ADD:
             return ADD(D(LEFT), D(RIGHT));
         case OP_SUB:
@@ -272,7 +272,6 @@ static inline void assign_num(ast_node* dest, double num)
     dest->left = NULL;
     dest->right = NULL;
 }
-
 
 static void collapse_const(ast_node* node)
 {
