@@ -2,4 +2,6 @@ build/
 doxygen/
 .vscode/
 *.log
+*.aux
+*.out
 logs.html

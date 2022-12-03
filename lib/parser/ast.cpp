@@ -215,7 +215,7 @@ void print_node(const ast_node* root, string_builder * builder)
 
     string_builder_append_format(builder, "\\begin{equation}\n");
     print_subtree(root, labels, builder);
-    string_builder_append_format(builder, "\n\\end{equation}\n\n");
+    string_builder_append_format(builder, "\n\\end{equation}\n");
     if (has_labels(labels))
     {
         string_builder_append_format(builder, "Where:\n"

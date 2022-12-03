@@ -7,6 +7,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "tree_math.h"
+#include "article_builder.h"
 
 int main()
 {
@@ -24,14 +25,27 @@ int main()
     abstract_syntax_tree* deriv = derivative(ast, "x");
     abstract_syntax_tree* maclaurin = maclaurin_series(ast, "x", 3);
 
-    string_builder builder = {};
-    string_builder_ctor(&builder);
+    article_builder article = {};
+    article_ctor(&article);
+    article_use_preamble(&article, "assets/preamble.sty");
+    article_use_starters(&article, "assets/starters.txt");
+    // article_add_title(&article, "Test article", "MeerkatBoss");
 
-    print_node(ast->root, &builder);
-    print_node(deriv->root, &builder);
-    print_node(maclaurin->root, &builder);
+    article_start(&article);
 
-    string_builder_write(&builder, STDOUT_FILENO);
+    // article_add_abstract(&article, "Wonderful article");
+    article_add_section(&article, "First section");
+
+    article_add_starter(&article);
+    print_node(ast->root, &article.text);
+    article_add_starter(&article);
+    print_node(deriv->root, &article.text);
+    article_add_starter(&article);
+    print_node(maclaurin->root, &article.text);
+
+    article_end(&article);
+
+    article_build(&article, "output");
 
     array_dtor(tokens);
     free(tokens);
@@ -39,6 +53,6 @@ int main()
     tree_dtor(ast);
     tree_dtor(deriv);
     tree_dtor(maclaurin);
-    string_builder_dtor(&builder);
+    article_dtor(&article);
     return 0;
 }
