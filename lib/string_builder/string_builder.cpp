@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "logger.h"
 
@@ -78,10 +79,10 @@ void string_builder_append(string_builder *builder, const char *str)
     LOG_ASSERT(str != NULL, return);
 
     size_t len = strlen(str);
-    size_t start = builder->size;
     ensure_fit(builder, builder->size + len);
 
-    strncpy(builder->data + start, str, len);
+    strncpy(builder->data + builder->size, str, len);
+    builder->size += len;
 }
 
 void string_builder_append_format(string_builder *builder, const char *format, ...)
@@ -96,12 +97,12 @@ void string_builder_append_format(string_builder *builder, const char *format, .
 
     va_end(args);
 
-    size_t start = builder->size;
     ensure_fit(builder, builder->size + len);
 
     va_start(args, format);
 
-    vsprintf(builder->data, format, args);
+    vsprintf(builder->data + builder->size, format, args);
+    builder->size += len;
 
     va_end(args);
 }
@@ -113,7 +114,13 @@ char *string_builder_get_string(const string_builder *builder)
 
 void string_builder_print(const string_builder *builder, FILE *stream)
 {
-    fprintf(stream, "%.*s", (int) builder->size, builder->data);
+    int fd = fileno(stream);
+    string_builder_write(builder, fd);
+}
+
+void string_builder_write(const string_builder *builder, int fd)
+{
+    write(fd, builder->data, builder->size * sizeof(char));
 }
 
 void ensure_fit(string_builder *builder, size_t new_size)

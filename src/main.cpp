@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "logger.h"
 
@@ -23,13 +24,14 @@ int main()
     abstract_syntax_tree* deriv = derivative(ast, "x");
     abstract_syntax_tree* maclaurin = maclaurin_series(ast, "x", 3);
 
+    string_builder builder = {};
+    string_builder_ctor(&builder);
 
-    print_node(ast->root, stdout);
-    putc('\n', stdout);
-    print_node(deriv->root, stdout);
-    putc('\n', stdout);
-    print_node(maclaurin->root, stdout);
-    putc('\n', stdout);
+    print_node(ast->root, &builder);
+    print_node(deriv->root, &builder);
+    print_node(maclaurin->root, &builder);
+
+    string_builder_write(&builder, STDOUT_FILENO);
 
     array_dtor(tokens);
     free(tokens);
@@ -37,5 +39,6 @@ int main()
     tree_dtor(ast);
     tree_dtor(deriv);
     tree_dtor(maclaurin);
+    string_builder_dtor(&builder);
     return 0;
 }

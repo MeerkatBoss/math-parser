@@ -21,5 +21,6 @@ void string_builder_append_format(string_builder* builder, const char* format, .
     __attribute__((format(printf, 2, 3)));
 char* string_builder_get_string(const string_builder* builder);
 void string_builder_print(const string_builder* builder, FILE* stream);
+void string_builder_write(const string_builder* builder, int fd);
 
 #endif

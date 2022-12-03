@@ -182,13 +182,13 @@ static const int MAX_LABELS = 'Z'-'A'+1;
 static void print_subtree(
                         const ast_node* node,
                         const ast_node* labels[MAX_LABELS],
-                        FILE* stream);
+                        string_builder* builder);
 static int requires_grouping(const ast_node* parent, const ast_node* child);
 static int is_unary(op_type op);
-static void print_op(op_type op, FILE* stream);
+static void print_op(op_type op, string_builder* builder);
 static int label_subtrees(const ast_node* node, const ast_node* labels[MAX_LABELS]);
 static char find_label(const ast_node* node, const ast_node* labels[MAX_LABELS]);
-void print_labels(const ast_node * labels[MAX_LABELS], FILE* stream);
+void print_labels(const ast_node * labels[MAX_LABELS], string_builder* builder);
 static int add_label(const ast_node* node, const ast_node* labels[MAX_LABELS]);
 static inline int has_labels(const ast_node* labels[MAX_LABELS])
 {
@@ -208,53 +208,53 @@ static inline void set_node(
     labels[label - 'A'] = node;
 }
 
-void print_node(const ast_node* root, FILE * stream)
+void print_node(const ast_node* root, string_builder * builder)
 {
     const ast_node* labels[MAX_LABELS] = {};
     label_subtrees(root, labels);
 
-    fprintf(stream, "\\begin{equation}\n");
-    print_subtree(root, labels, stream);
-    fprintf(stream, "\n\\end{equation}\n\n");
+    string_builder_append_format(builder, "\\begin{equation}\n");
+    print_subtree(root, labels, builder);
+    string_builder_append_format(builder, "\n\\end{equation}\n\n");
     if (has_labels(labels))
     {
-        fprintf(stream, "Where:\n"
+        string_builder_append_format(builder, "Where:\n"
                         "\\begin{itemize}\n");
-        print_labels(labels, stream);
-        fprintf(stream, "\\end{itemize}\n\n");
+        print_labels(labels, builder);
+        string_builder_append_format(builder, "\\end{itemize}\n\n");
     }
 }
 
 static void print_subtree(
                         const ast_node * node,
                         const ast_node* labels[MAX_LABELS],
-                        FILE * stream)
+                        string_builder * builder)
 {
     char shorthand = find_label(node, labels);
     if (shorthand != '\0')
     {
-        fprintf(stream, "%c ", shorthand);
+        string_builder_append_format(builder, "%c ", shorthand);
         return;
     }
 
     if (is_num(node))
     {
-        fprintf(stream, "%g ", get_num(node));
+        string_builder_append_format(builder, "%g ", get_num(node));
         return;
     }
     if (is_var(node))
     {
-        fprintf(stream, "%s ", get_var(node));
+        string_builder_append_format(builder, "%s ", get_var(node));
         return;
     }
 
     if (op_cmp(node, OP_DIV))
     {
-        fprintf(stream, "\\frac{");
-        print_subtree(node->left, labels, stream);
-        fprintf(stream, "}{");
-        print_subtree(node->right, labels, stream);
-        fprintf(stream, "} ");
+        string_builder_append_format(builder, "\\frac{");
+        print_subtree(node->left, labels, builder);
+        string_builder_append_format(builder, "}{");
+        print_subtree(node->right, labels, builder);
+        string_builder_append_format(builder, "} ");
         return;
     }
     
@@ -262,27 +262,27 @@ static void print_subtree(
     if (!is_unary(node->value.op))
     {
         group = requires_grouping(node, node->left);
-        if (group) fprintf(stream, "\\left( ");
-        print_subtree(node->left, labels, stream);
-        if (group) fprintf(stream, "\\right) ");
+        if (group) string_builder_append_format(builder, "\\left( ");
+        print_subtree(node->left, labels, builder);
+        if (group) string_builder_append_format(builder, "\\right) ");
     }
 
-    print_op(get_op(node), stream);
+    print_op(get_op(node), builder);
 
     if (op_cmp(node, OP_POW) || op_cmp(node, OP_SQRT))
     {
-        fprintf(stream, "{");
-        print_subtree(node->right, labels, stream);
-        fprintf(stream, "} ");
+        string_builder_append_format(builder, "{");
+        print_subtree(node->right, labels, builder);
+        string_builder_append_format(builder, "} ");
         return;
     }
 
     group = requires_grouping(node, node->right);
-    if (group) fprintf(stream, "\\left( ");
+    if (group) string_builder_append_format(builder, "\\left( ");
 
-    print_subtree(node->right, labels, stream);
+    print_subtree(node->right, labels, builder);
 
-    if (group) fprintf(stream, "\\right) ");
+    if (group) string_builder_append_format(builder, "\\right) ");
 }
 
 static int requires_grouping(const ast_node * parent, const ast_node * child)
@@ -323,26 +323,26 @@ static int is_unary(op_type op)
     );
 }
 
-static void print_op(op_type op, FILE* stream)
+static void print_op(op_type op, string_builder* builder)
 {
     switch (op)
     {
-        case OP_ADD:    fprintf(stream, "+ ");          return;
-        case OP_SUB:    fprintf(stream, "- ");          return;
-        case OP_MUL:    fprintf(stream, "\\cdot ");     return;
-        case OP_DIV:    fprintf(stream, "/ ");          return;
-        case OP_POW:    fprintf(stream, "^");           return;
-        case OP_NEG:    fprintf(stream, "-");           return;
-        case OP_LN:     fprintf(stream, "\\ln ");       return;
-        case OP_SQRT:   fprintf(stream, "\\sqrt ");     return;
-        case OP_SIN:    fprintf(stream, "\\sin ");      return;
-        case OP_COS:    fprintf(stream, "\\cos ");      return;
-        case OP_TAN:    fprintf(stream, "\\tan ");      return;
-        case OP_COT:    fprintf(stream, "\\cot ");      return;
-        case OP_ARCSIN: fprintf(stream, "\\arcsin ");   return;
-        case OP_ARCCOS: fprintf(stream, "\\arccos ");   return;
-        case OP_ARCTAN: fprintf(stream, "\\arctan ");   return;
-        case OP_ARCCOT: fprintf(stream, "\\arccot ");   return;
+        case OP_ADD:    string_builder_append_format(builder, "+ ");          return;
+        case OP_SUB:    string_builder_append_format(builder, "- ");          return;
+        case OP_MUL:    string_builder_append_format(builder, "\\cdot ");     return;
+        case OP_DIV:    string_builder_append_format(builder, "/ ");          return;
+        case OP_POW:    string_builder_append_format(builder, "^");           return;
+        case OP_NEG:    string_builder_append_format(builder, "-");           return;
+        case OP_LN:     string_builder_append_format(builder, "\\ln ");       return;
+        case OP_SQRT:   string_builder_append_format(builder, "\\sqrt ");     return;
+        case OP_SIN:    string_builder_append_format(builder, "\\sin ");      return;
+        case OP_COS:    string_builder_append_format(builder, "\\cos ");      return;
+        case OP_TAN:    string_builder_append_format(builder, "\\tan ");      return;
+        case OP_COT:    string_builder_append_format(builder, "\\cot ");      return;
+        case OP_ARCSIN: string_builder_append_format(builder, "\\arcsin ");   return;
+        case OP_ARCCOS: string_builder_append_format(builder, "\\arccos ");   return;
+        case OP_ARCTAN: string_builder_append_format(builder, "\\arctan ");   return;
+        case OP_ARCCOT: string_builder_append_format(builder, "\\arccot ");   return;
         default: LOG_ASSERT(0 && "Invalid enum value.", return);
     }
     LOG_ASSERT(0 && "Unreachable code", return);
@@ -375,16 +375,16 @@ char find_label(const ast_node * node, const ast_node * labels[MAX_LABELS])
     return '\0';
 }
 
-void print_labels(const ast_node * labels[MAX_LABELS], FILE* stream)
+void print_labels(const ast_node * labels[MAX_LABELS], string_builder* builder)
 {
     for (char i = 'A'; i <= 'Z' && get_node(i, labels) != NULL; i++)
     {
-        fprintf(stream, "\t\\item $%c = ", i);
+        string_builder_append_format(builder, "\t\\item $%c = ", i);
         const ast_node* def = get_node(i, labels);
         set_node(i, NULL, labels);
-        print_subtree(def, labels, stream);
+        print_subtree(def, labels, builder);
         set_node(i, def, labels);
-        fprintf(stream, "$\n");
+        string_builder_append_format(builder, "$\n");
     }
 }
 
