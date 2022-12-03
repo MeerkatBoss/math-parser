@@ -37,7 +37,7 @@ void string_builder_ctor(string_builder *builder, const char* str)
     {
         size_t len = strlen(str);
         strncpy(builder->data, str, len);
-        builder->data = len;
+        builder->size = len;
     }
 }
 

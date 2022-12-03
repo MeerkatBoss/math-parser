@@ -8,7 +8,7 @@ struct string_builder
     char* data;
     size_t capacity;
     size_t size;
-}
+};
 
 /* TODO: docs */
 

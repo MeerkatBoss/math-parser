@@ -233,11 +233,11 @@ tree_iterator tree_get_prev(tree_iterator it);
 tree_iterator tree_end(abstract_syntax_tree* tree);
 
 /**
- * @brief Output tree to specified stream in LaTeX format
+ * @brief Output node subtree to specified stream in LaTeX format
  * 
- * @param[in] ast Printed tree
+ * @param[in] node Printed node
  * @param[in] stream Output stream
  */
-void print_tree(const abstract_syntax_tree* ast, FILE* stream);
+void print_node(const ast_node* node, FILE* stream);
 
 #endif

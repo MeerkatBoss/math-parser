@@ -179,9 +179,8 @@ tree_iterator tree_end(abstract_syntax_tree* tree)
 static const int MAX_LABELS = 'Z'-'A'+1;
 
 
-static void print_node(
+static void print_subtree(
                         const ast_node* node,
-                        const abstract_syntax_tree* ast,
                         const ast_node* labels[MAX_LABELS],
                         FILE* stream);
 static int requires_grouping(const ast_node* parent, const ast_node* child);
@@ -189,10 +188,7 @@ static int is_unary(op_type op);
 static void print_op(op_type op, FILE* stream);
 static int label_subtrees(const ast_node* node, const ast_node* labels[MAX_LABELS]);
 static char find_label(const ast_node* node, const ast_node* labels[MAX_LABELS]);
-void print_labels(
-                  const abstract_syntax_tree* ast,
-                  const ast_node * labels[MAX_LABELS],
-                  FILE* stream);
+void print_labels(const ast_node * labels[MAX_LABELS], FILE* stream);
 static int add_label(const ast_node* node, const ast_node* labels[MAX_LABELS]);
 static inline int has_labels(const ast_node* labels[MAX_LABELS])
 {
@@ -212,26 +208,25 @@ static inline void set_node(
     labels[label - 'A'] = node;
 }
 
-void print_tree(const abstract_syntax_tree * ast, FILE * stream)
+void print_node(const ast_node* root, FILE * stream)
 {
     const ast_node* labels[MAX_LABELS] = {};
-    label_subtrees(ast->root, labels);
+    label_subtrees(root, labels);
 
     fprintf(stream, "\\begin{equation}\n");
-    print_node(ast->root, ast, labels, stream);
+    print_subtree(root, labels, stream);
     fprintf(stream, "\n\\end{equation}\n\n");
     if (has_labels(labels))
     {
         fprintf(stream, "Where:\n"
                         "\\begin{itemize}\n");
-        print_labels(ast, labels, stream);
+        print_labels(labels, stream);
         fprintf(stream, "\\end{itemize}\n\n");
     }
 }
 
-static void print_node(
+static void print_subtree(
                         const ast_node * node,
-                        const abstract_syntax_tree * ast,
                         const ast_node* labels[MAX_LABELS],
                         FILE * stream)
 {
@@ -256,9 +251,9 @@ static void print_node(
     if (op_cmp(node, OP_DIV))
     {
         fprintf(stream, "\\frac{");
-        print_node(node->left, ast, labels, stream);
+        print_subtree(node->left, labels, stream);
         fprintf(stream, "}{");
-        print_node(node->right, ast, labels, stream);
+        print_subtree(node->right, labels, stream);
         fprintf(stream, "} ");
         return;
     }
@@ -268,7 +263,7 @@ static void print_node(
     {
         group = requires_grouping(node, node->left);
         if (group) fprintf(stream, "\\left( ");
-        print_node(node->left, ast, labels, stream);
+        print_subtree(node->left, labels, stream);
         if (group) fprintf(stream, "\\right) ");
     }
 
@@ -277,7 +272,7 @@ static void print_node(
     if (op_cmp(node, OP_POW) || op_cmp(node, OP_SQRT))
     {
         fprintf(stream, "{");
-        print_node(node->right, ast, labels, stream);
+        print_subtree(node->right, labels, stream);
         fprintf(stream, "} ");
         return;
     }
@@ -285,7 +280,7 @@ static void print_node(
     group = requires_grouping(node, node->right);
     if (group) fprintf(stream, "\\left( ");
 
-    print_node(node->right, ast, labels, stream);
+    print_subtree(node->right, labels, stream);
 
     if (group) fprintf(stream, "\\right) ");
 }
@@ -380,17 +375,14 @@ char find_label(const ast_node * node, const ast_node * labels[MAX_LABELS])
     return '\0';
 }
 
-void print_labels(
-                  const abstract_syntax_tree* ast,
-                  const ast_node * labels[MAX_LABELS],
-                  FILE* stream)
+void print_labels(const ast_node * labels[MAX_LABELS], FILE* stream)
 {
     for (char i = 'A'; i <= 'Z' && get_node(i, labels) != NULL; i++)
     {
         fprintf(stream, "\t\\item $%c = ", i);
         const ast_node* def = get_node(i, labels);
         set_node(i, NULL, labels);
-        print_node(def, ast, labels, stream);
+        print_subtree(def, labels, stream);
         set_node(i, def, labels);
         fprintf(stream, "$\n");
     }

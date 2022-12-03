@@ -40,10 +40,10 @@ set(CMAKE_LINKER_FLAGS "${CMAKE_CXX_FLAGS}-D _DEBUG -ggdb3 -std=c++2a -O0 -Wall 
     -pie -Wlarger-than=8192 -Wstack-usage=8192") 
 
 add_subdirectory(lib/logger)
+add_subdirectory(lib/dynamic_array)
+add_subdirectory(lib/string_builder)
 
 add_subdirectory(lib/math_utils)
-
-add_subdirectory(lib/dynamic_array)
 
 add_subdirectory(lib/lexer)
 

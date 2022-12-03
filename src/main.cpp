@@ -24,11 +24,11 @@ int main()
     abstract_syntax_tree* maclaurin = maclaurin_series(ast, "x", 3);
 
 
-    print_tree(ast, stdout);
+    print_node(ast->root, stdout);
     putc('\n', stdout);
-    print_tree(deriv, stdout);
+    print_node(deriv->root, stdout);
     putc('\n', stdout);
-    print_tree(maclaurin, stdout);
+    print_node(maclaurin->root, stdout);
     putc('\n', stdout);
 
     array_dtor(tokens);
