@@ -51,7 +51,7 @@ enum op_type
  */
 union node_value{
     double num;
-    size_t var_id;
+    var_name var;
     op_type op;
 }; 
 
@@ -85,17 +85,17 @@ struct ast_node
 
 /* TODO: docs */
 
-inline double  get_num(const ast_node* node)             { return node->value.num; }
-inline int     is_num (const ast_node* node)             { return node && node->type == NODE_NUM;}
-inline int     num_cmp(const ast_node* node, double num) { return is_num(node) && compare_double(get_num(node), num) == 0; }
+inline double   get_num(const ast_node* node)               { return node->value.num; }
+inline int      is_num (const ast_node* node)               { return node && node->type == NODE_NUM;}
+inline int      num_cmp(const ast_node* node, double num)   { return is_num(node) && compare_double(get_num(node), num) == 0; }
 
-inline op_type get_op (const ast_node* node)             { return node->value.op; }
-inline int     is_op  (const ast_node* node)             { return node && node->type == NODE_OP; }
-inline int     op_cmp (const ast_node* node, op_type op) { return is_op(node) && get_op(node) == op; }
+inline op_type  get_op (const ast_node* node)               { return node->value.op; }
+inline int      is_op  (const ast_node* node)               { return node && node->type == NODE_OP; }
+inline int      op_cmp (const ast_node* node, op_type op)   { return is_op(node) && get_op(node) == op; }
 
-inline size_t  get_var(const ast_node* node)             { return node->value.var_id; }
-inline int     is_var (const ast_node* node)             { return node && node->type == NODE_VAR; }
-inline int     var_cmp(const ast_node* node, size_t var) { return is_var(node) && get_var(node) == var; }
+inline var_name get_var(const ast_node* node)               { return node->value.var; }
+inline int      is_var (const ast_node* node)               { return node && node->type == NODE_VAR; }
+inline int      var_cmp(const ast_node* node, var_name var) { return is_var(node) && get_var(node) == var; }
 
 typedef ast_node* tree_iterator;
 
@@ -155,7 +155,7 @@ ast_node* make_number_node(double val);
  * @param[in] id Variable id
  * @return Created node
  */
-ast_node* make_var_node(size_t id);
+ast_node* make_var_node(var_name var);
 
 /* TODO: docs */ 
 

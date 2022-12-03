@@ -42,9 +42,9 @@ ast_node * make_number_node(double val)
     return make_node(NODE_NUM, {.num = val});
 }
 
-ast_node * make_var_node(size_t id)
+ast_node * make_var_node(var_name var) 
 {
-    return make_node(NODE_VAR, {.var_id = id});
+    return make_node(NODE_VAR, {.var = var});
 }
 
 ast_node* copy_subtree(ast_node * node)
@@ -249,13 +249,7 @@ static void print_node(
     }
     if (is_var(node))
     {
-        LOG_ASSERT_ERROR(node->value.var_id < ast->variables.size,
-        {
-            fprintf(stream, "[UNKNOWN]");
-            return;
-        }, "Unknown variable encountered.", NULL);
-
-        fprintf(stream, "%s ", *array_get_element(&ast->variables, get_var(node)));
+        fprintf(stream, "%s ", get_var(node));
         return;
     }
 

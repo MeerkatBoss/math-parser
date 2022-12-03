@@ -19,10 +19,10 @@ inline void delete_element(ARRAY_ELEMENT* element) { free(*element); *element = 
  * 
  * @param[in] array Array, containing variable name
  * @param[in] var Variable name
- * @param[out] var_id Variable id
+ * @param[out] var_id Variable id. Ignored if set to `NULL`
  * @return 0 if variable with given name does not, non-zero otherwise
  */
-int array_try_find_variable(const dynamic_array(var_name)* array, const char* var, size_t* var_id);
+int array_try_find_variable(const dynamic_array(var_name)* array, const char* var, size_t* var_id = NULL);
 
 #undef ARRAY_ELEMENT
 

@@ -6,10 +6,10 @@
 #include "math_utils.h"
 #include "tree_math.h"
 
-static ast_node* get_differential(ast_node* node, size_t var_id);
+static ast_node* get_differential(ast_node* node, var_name var);
 static void simplify_node(ast_node* node);
-static int is_const(ast_node* node, size_t var_id);
-static ast_node* evaluate_partially(ast_node* node, size_t var_id, double val);
+static int is_const(ast_node* node, var_name var);
+static ast_node* evaluate_partially(ast_node* node, var_name var, double val);
 
 abstract_syntax_tree* derivative(abstract_syntax_tree * ast, const char * var)
 {
@@ -18,10 +18,12 @@ abstract_syntax_tree* derivative(abstract_syntax_tree * ast, const char * var)
         array_try_find_variable(&ast->variables, var, &var_id),
         return NULL,
         "Variable '%s' was not defined", var);
+    
+    var_name v_name = *array_get_element(&ast->variables, var_id);
 
     abstract_syntax_tree* result = tree_copy(ast);
     
-    result->root = get_differential(ast->root, var_id);
+    result->root = get_differential(ast->root, v_name);
     simplify(result);
 
     return result;
@@ -36,7 +38,7 @@ void simplify(abstract_syntax_tree* ast)
 #define RIGHT node->right
 
 static inline ast_node* NUM(double num)    { return make_number_node(num); }
-static inline ast_node* VAR(size_t var_id) { return make_var_node(var_id); }
+static inline ast_node* VAR(var_name var)  { return make_var_node(var);    }
 
 static inline ast_node* ADD (ast_node* left, ast_node* right) { return make_binary_node(OP_ADD, left, right); }
 static inline ast_node* SUB (ast_node* left, ast_node* right) { return make_binary_node(OP_SUB, left, right); }
@@ -47,10 +49,10 @@ static inline ast_node* POW (ast_node* left, ast_node* right) { return make_bina
 static inline ast_node* NEG (ast_node* right) { return make_unary_node(OP_NEG, right); }
 static inline ast_node* SIN (ast_node* right) { return make_unary_node(OP_SIN, right); }
 static inline ast_node* COS (ast_node* right) { return make_unary_node(OP_COS, right); }
-static inline ast_node* SQRT(ast_node* right) { return make_unary_node(OP_SQRT, right); }
-static inline ast_node* LN  (ast_node* right) { return make_unary_node(OP_LN, right); }
+static inline ast_node* SQRT(ast_node* right) { return make_unary_node(OP_SQRT, right);}
+static inline ast_node* LN  (ast_node* right) { return make_unary_node(OP_LN, right);  }
 
-#define D(x) get_differential(x, var_id)
+#define D(x) get_differential(x, var)
 
 static inline ast_node* CPY(ast_node* node) { return copy_subtree(node); }
 
@@ -64,11 +66,13 @@ abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * 
 
     abstract_syntax_tree* result = tree_copy(ast);
     result->root = make_number_node(0);
+
+    var_name v_name = *array_get_element(&ast->variables, var_id);
     
     ast_node* cur = CPY(ast->root);
     for (int i = 0; i <= pow; i++)
     {
-        ast_node* at_zero = evaluate_partially(cur, var_id, 0);
+        ast_node* at_zero = evaluate_partially(cur, v_name, 0);
         simplify_node(at_zero);
         result->root =
             ADD(
@@ -76,12 +80,12 @@ abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * 
                 MUL(
                     at_zero,
                     FRAC(
-                        POW(VAR(var_id), NUM(i)),
+                        POW(VAR(v_name), NUM(i)),
                         NUM(factorial(i))
                     )
                 )
             );
-        ast_node* nxt = get_differential(cur, var_id);
+        ast_node* nxt = get_differential(cur, v_name);
         delete_subtree(cur);
         cur = nxt;
         simplify_node(cur);
@@ -92,12 +96,12 @@ abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * 
     return result;
 }
 
-static ast_node* get_differential(ast_node * node, size_t var_id)
+static ast_node* get_differential(ast_node * node, var_name var)
 {
-    if (var_cmp(node, var_id))
+    if (var_cmp(node, var))
         return NUM(1);
 
-    if (is_const(node, var_id))
+    if (is_const(node, var))
         return NUM(0);
 
     
@@ -125,7 +129,7 @@ static ast_node* get_differential(ast_node * node, size_t var_id)
                 POW(CPY(RIGHT), NUM(2))
             );
         case OP_POW:
-            if(is_const(node->left, var_id))
+            if(is_const(node->left, var))
                 return MUL(
                     MUL(
                         LN(CPY(LEFT)),
@@ -133,7 +137,7 @@ static ast_node* get_differential(ast_node * node, size_t var_id)
                     ),
                     D(RIGHT)
                 );
-            if (is_const(node->right, var_id))
+            if (is_const(node->right, var))
                 return MUL(
                     MUL(
                         CPY(RIGHT),
@@ -216,25 +220,25 @@ static void simplify_node(ast_node * node)
     if (is_same_var(LEFT, RIGHT))      collapse_var          (node);
 }
 
-static int is_const(ast_node * node, size_t var_id)
+static int is_const(ast_node * node, var_name var)
 {
     if (!node) return 1; /* Vacuous truth */
 
     if (is_num(node)) return 1;
-    if (is_var(node)) return !var_cmp(node, var_id);
+    if (is_var(node)) return !var_cmp(node, var);
 
-    return is_const(LEFT, var_id) && is_const(RIGHT, var_id);
+    return is_const(LEFT, var) && is_const(RIGHT, var);
 }
 
-ast_node* evaluate_partially(ast_node* node, size_t var_id, double val)
+ast_node* evaluate_partially(ast_node* node, var_name var, double val)
 {
     if (!node) return NULL;
-    if (var_cmp(node, var_id))
+    if (var_cmp(node, var))
         return NUM(val);
     
     ast_node* copy = make_node(node->type, node->value);
-    copy-> left = evaluate_partially(node-> left, var_id, val);
-    copy->right = evaluate_partially(node->right, var_id, val);
+    copy-> left = evaluate_partially(node-> left, var, val);
+    copy->right = evaluate_partially(node->right, var, val);
     if (copy-> left) copy-> left->parent = copy;
     if (copy->right) copy->right->parent = copy;
 

@@ -11,15 +11,13 @@ struct parsing_state
     dynamic_array(var_name)* variables;
 };
 
-static ast_node* parse_sum(parsing_state* state);
+static ast_node* parse_expression(parsing_state* state);
 static ast_node* parse_product(parsing_state* state);
 static ast_node* parse_unary(parsing_state* state);
 static ast_node* parse_fraction(parsing_state* state);
 static ast_node* parse_power(parsing_state* state);
 static ast_node* parse_group(parsing_state* state);
 static ast_node* parse_atom(parsing_state* state);
-
-static size_t get_var_id(parsing_state* state, const char* name);
 
 static inline token* current_token(parsing_state* state)
 {
@@ -57,7 +55,7 @@ abstract_syntax_tree* build_tree(const dynamic_array(token)* tokens)
         .pos       = 0,
         .variables = &ast->variables
     };
-    ast->root = parse_sum(&state);
+    ast->root = parse_expression(&state);
     LOG_ASSERT(ast->root,
     {
         tree_dtor(ast);
@@ -71,7 +69,7 @@ abstract_syntax_tree* build_tree(const dynamic_array(token)* tokens)
     return ast;
 }
 
-static ast_node* parse_sum(parsing_state* state) // TODO: rename? parse_expression?
+static ast_node* parse_expression(parsing_state* state)
 {
     ast_node* left = parse_product(state);
     while(consume_check(state, TOK_PLUS) || consume_check(state, TOK_MINUS))
@@ -130,7 +128,7 @@ ast_node * parse_fraction(parsing_state * state)
     LOG_ASSERT_ERROR(consume_check(state, TOK_LBRACKET), return NULL,
         "Expected '{' after '\\frac'", NULL);
     
-    ast_node* left = parse_sum(state);
+    ast_node* left = parse_expression(state);
 
     LOG_ASSERT_ERROR(consume_check(state, TOK_RBRACKET),
         {delete_subtree(left); return NULL;},
@@ -140,7 +138,7 @@ ast_node * parse_fraction(parsing_state * state)
         {delete_subtree(left); return NULL;},
         "Expected '{' before second argument of '\\frac'", NULL);
 
-    ast_node* right = parse_sum(state);
+    ast_node* right = parse_expression(state);
 
     LOG_ASSERT_ERROR(consume_check(state, TOK_RBRACKET),
         {delete_subtree(left); delete_subtree(right); return NULL;},
@@ -166,16 +164,13 @@ ast_node * parse_group(parsing_state * state)
     
     token_type left_paren = last_token(state)->type;
 
-    ast_node* expr = parse_sum(state);
+    ast_node* expr = parse_expression(state);
 
-    if (left_paren == TOK_LBRACKET)
-        LOG_ASSERT_ERROR(consume_check(state, TOK_RBRACKET),
-            { delete_subtree(expr); return NULL;},
-            "Expected '}'.", NULL);
-    if (left_paren == TOK_LPAREN)
-        LOG_ASSERT_ERROR(consume_check(state, TOK_RPAREN),
-            { delete_subtree(expr); return NULL;}, // TODO: think if you can make this smaller?
-            "Expected '}'.", NULL);                //       make your code descriptive, please!
+    token_type right_paren = left_paren == TOK_LBRACKET ? TOK_RBRACKET : TOK_RPAREN;
+
+    LOG_ASSERT_ERROR(consume_check(state, right_paren),
+        { delete_subtree(expr); return NULL;},
+        "Expected '}'.", NULL);
     
     return expr;
 }
@@ -194,7 +189,7 @@ ast_node * parse_atom(parsing_state * state)
             array_push(state->variables, name);
             var_id = state->variables->size - 1;
         }
-        return make_var_node(var_id);
+        return make_var_node(*array_get_element(state->variables, var_id));
     }
 
     LOG_ASSERT_ERROR(0, return NULL,
