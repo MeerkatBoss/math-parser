@@ -42,7 +42,7 @@ __DEF_HELPER(DEFINE_ARRAY_POP, ARRAY_ELEMENT)
     delete_element(&array->data[array->size]);
     array->size--;
 
-    if (array->size * 4 <= array->capacity)
+    if (array->size * 4 <= array->capacity && array->capacity > DEFAULT_CAP)
     {
         array->capacity /= 2;
         array->data = (ARRAY_ELEMENT*) reallocarray(array->data, array->capacity, sizeof(ARRAY_ELEMENT));
