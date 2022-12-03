@@ -1,7 +1,9 @@
-#ifndef TOKEN_LIST_H
-#define TOKEN_LIST_H
+#ifndef TOKEN_ARRAY_H
+#define TOKEN_ARRAY_H
 
 #include <stddef.h>
+#include <string.h>
+#include <stdlib.h>
 
 // TODO: move closer, undef!
 #define MATH_FUNC(name, ...) TOK_##name,
@@ -37,9 +39,23 @@ struct token
     } value;
 };
 
-#define REDEFINE_ELEMENT
-typedef token element_t;
-const element_t POISON = {.type = TOK_NONE};
-#include "list.h"
+#define ARRAY_ELEMENT token
+
+/* Shallow copy */
+inline void copy_element(ARRAY_ELEMENT* dest, const ARRAY_ELEMENT* src)
+{
+    dest->type = src->type;
+    dest->value = src->value;
+}
+
+inline void delete_element(ARRAY_ELEMENT* element)
+{
+    if (element->type == TOK_VAR)
+        free(element->value.name);
+
+    element = {};
+}
+
+#include "dynamic_array.h"
 
 #endif

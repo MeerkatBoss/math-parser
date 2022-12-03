@@ -6,8 +6,8 @@
 
 struct parsing_state
 {
-    const compact_list* tokens;
-    list_iterator pos;
+    const dynamic_array(token)* tokens;
+    size_t pos;
     size_t var_cnt; // TODO: please, have mercy
     char** vars;
 };
@@ -24,17 +24,17 @@ static size_t get_var_id(parsing_state* state, const char* name);
 
 static inline token* current_token(parsing_state* state)
 {
-    return get_element(state->tokens, state->pos);
+    return array_get_element(state->tokens, state->pos);
 }
 
 static inline token* last_token(parsing_state* state)
 {
-    return get_element(state->tokens, prev_element(state->tokens, state->pos));
+    return array_get_element(state->tokens, state->pos - 1);
 }
 
 static inline void advance(parsing_state* state)
 {
-    state->pos = next_element(state->tokens, state->pos);
+    state->pos++;
 }
 
 static inline token* consume(parsing_state* state, token_type expected)
@@ -50,12 +50,12 @@ static inline int consume_check(parsing_state* state, token_type expected)
     return consume(state, expected)->type == expected;
 }
 
-abstract_syntax_tree* build_tree(const compact_list * tokens)
+abstract_syntax_tree* build_tree(const dynamic_array(token)* tokens)
 {
     abstract_syntax_tree* ast = tree_ctor();
     parsing_state state = {
         .tokens  = tokens,
-        .pos     = list_begin(tokens),
+        .pos     = 0,
         .var_cnt = 0,
         .vars    = ast->vars
     };

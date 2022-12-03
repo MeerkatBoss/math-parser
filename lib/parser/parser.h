@@ -1,7 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "token_list.h"
+#include "token_array.h"
 
 #include "ast.h"
 
@@ -10,6 +10,6 @@
  * @param[in] tokens Token list
  * @return Built AST
  */
-abstract_syntax_tree* build_tree(const compact_list* tokens);
+abstract_syntax_tree* build_tree(const dynamic_array(token)* tokens);
 
 #endif

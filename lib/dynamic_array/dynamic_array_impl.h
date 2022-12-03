@@ -2,8 +2,6 @@
 
 #include "logger.h"
 
-#include "dynamic_array.h"
-
 static const size_t DEFAULT_CAP = 16;
 
 #define __DEF_HELPER(macro1, macro2) macro1(macro2)
@@ -63,7 +61,7 @@ __DEF_HELPER(DEFINE_ARRAY_COPY, ARRAY_ELEMENT)
 
 __DEF_HELPER(DEFINE_ARRAY_GET, ARRAY_ELEMENT)
 {
-    LOG_ASSERT(index < array->size, return);
+    LOG_ASSERT(index < array->size, return NULL);
 
     return &array->data[index];
 }

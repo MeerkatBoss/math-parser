@@ -1,7 +1,7 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "token_list.h"
+#include "token_array.h"
 
 /**
  * @brief 
@@ -10,6 +10,6 @@
  * @param[in] str Input string
  * @return list of tokens
  */
-compact_list* parse_tokens(const char* str);
+dynamic_array(token)* parse_tokens(const char* str);
 
 #endif

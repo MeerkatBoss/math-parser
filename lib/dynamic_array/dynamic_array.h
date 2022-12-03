@@ -9,8 +9,8 @@
  * 
  * @note Before usage, provide definition for `ARRAY_ELEMENT` macro, as
  * well as for functions
- * `static inline void copy_element(ARRAY_ELEMENT* dest, const ARRAY_ELEMENT* src);` and
- * `static inline void delete_element(ARRAY_ELEMENT* element);`
+ * `inline void copy_element(ARRAY_ELEMENT* dest, const ARRAY_ELEMENT* src);` and
+ * `inline void delete_element(ARRAY_ELEMENT* element);`
  * 
  * @warning Definition of macro `ARRAY_ELEMENT` MUST NOT contain symbols, other than
  * decimal digits, latin alphabet letters and underscore. Definition of macro MUST NOT

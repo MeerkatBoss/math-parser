@@ -8,10 +8,10 @@
 
 static int has_prefix(const char* str1, const char* str2);
 
-compact_list* parse_tokens(const char* str)
+dynamic_array(token)* parse_tokens(const char* str)
 {
-    compact_list *tokens = (compact_list*)calloc(1, sizeof(*tokens));
-    *tokens = list_ctor(); // TODO: Why by value?
+    dynamic_array(token) *tokens = (dynamic_array(token)*)calloc(1, sizeof(*tokens));
+    array_ctor(tokens);
 
     while(*str)
     {
@@ -20,27 +20,25 @@ compact_list* parse_tokens(const char* str)
 
         if(!*str) break;
 
-        
-
         char* next_char = NULL;
         double number = strtod(str, &next_char);
         
         if(next_char != str)
         {
-            push_back(tokens, {.type = TOK_NUM, .value = {.num = number}});
+            array_push(tokens, {.type = TOK_NUM, .value = {.num = number}});
             str = next_char;
             continue;
         }
         
         switch (*(str++))
         {
-        case '+': push_back(tokens, {.type = TOK_PLUS});     continue;
-        case '-': push_back(tokens, {.type = TOK_MINUS});    continue;
-        case '^': push_back(tokens, {.type = TOK_CARET});    continue;
-        case '(': push_back(tokens, {.type = TOK_LPAREN});   continue;
-        case ')': push_back(tokens, {.type = TOK_RPAREN});   continue;
-        case '{': push_back(tokens, {.type = TOK_LBRACKET}); continue;
-        case '}': push_back(tokens, {.type = TOK_RBRACKET}); continue;
+        case '+': array_push(tokens, {.type = TOK_PLUS});     continue;
+        case '-': array_push(tokens, {.type = TOK_MINUS});    continue;
+        case '^': array_push(tokens, {.type = TOK_CARET});    continue;
+        case '(': array_push(tokens, {.type = TOK_LPAREN});   continue;
+        case ')': array_push(tokens, {.type = TOK_RPAREN});   continue;
+        case '{': array_push(tokens, {.type = TOK_LBRACKET}); continue;
+        case '}': array_push(tokens, {.type = TOK_RBRACKET}); continue;
 
         default:
             str--;
@@ -51,7 +49,7 @@ compact_list* parse_tokens(const char* str)
             if(has_prefix(str, "\\"#name))                     \
             {                                               \
                 str += sizeof("\\"#name)/sizeof(char) - 1;  \
-                push_back(tokens, {.type = TOK_##name});    \
+                array_push(tokens, {.type = TOK_##name});    \
                 continue;                                   \
             }
 
@@ -67,17 +65,17 @@ compact_list* parse_tokens(const char* str)
         LOG_ASSERT_ERROR(
             sscanf(str, " %32m[\\A-Za-z_] %n", &tok.value.name, &n_read) == 1,
             {
-                list_dtor(tokens);
+                array_dtor(tokens);
                 return NULL;
             },
             "Invalid symbol: '%c'", *str
         );
 
-        push_back(tokens, tok);
+        array_push(tokens, tok);
         str += n_read;
     }
 
-    push_back(tokens, {.type = TOK_EOF});
+    array_push(tokens, {.type = TOK_EOF});
 
     return tokens;
 }

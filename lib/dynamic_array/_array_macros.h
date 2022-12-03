@@ -24,4 +24,4 @@ void array_pop(dynamic_array(type)* array)
 void array_copy(dynamic_array(type)* dest, const dynamic_array(type)* src)
 
 #define DEFINE_ARRAY_GET(type) \
-type* array_get_element(dynamic_array(type)* array, size_t index)
+type* array_get_element(const dynamic_array(type)* array, size_t index)
