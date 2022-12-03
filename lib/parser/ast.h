@@ -85,7 +85,7 @@ struct ast_node
 
 inline double  get_num(ast_node* node)             { return node->value.num; }
 inline int     is_num (ast_node* node)             { return node && node->type == NODE_NUM;}
-inline int     num_cmp(ast_node* node, double num) { return is_num(node) && compare_double(get_num(node), num); }
+inline int     num_cmp(ast_node* node, double num) { return is_num(node) && compare_double(get_num(node), num) == 0; }
 
 inline op_type get_op (ast_node* node)             { return node->value.op; }
 inline int     is_op  (ast_node* node)             { return node && node->type == NODE_OP; }

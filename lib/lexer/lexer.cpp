@@ -25,7 +25,7 @@ compact_list* parse_tokens(const char* str)
         char* next_char = NULL;
         double number = strtod(str, &next_char);
         
-        if(next_char != NULL)
+        if(next_char != str)
         {
             push_back(tokens, {.type = TOK_NUM, .value = {.num = number}});
             str = next_char;

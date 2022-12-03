@@ -92,6 +92,7 @@ abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * 
         ast_node* nxt = get_differential(cur, var_id);
         delete_subtree(cur);
         cur = nxt;
+        simplify_node(cur);
     }
     simplify_node(result->root);
     delete_subtree(cur);
@@ -101,11 +102,12 @@ abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * 
 
 static ast_node* get_differential(ast_node * node, size_t var_id)
 {
+    if (var_cmp(node, var_id))
+        return NUM(1);
+
     if (is_const(node, var_id))
         return NUM(0);
 
-    if (node->type == NODE_NUM)
-        return NUM(1);
     
     #define MATH_FUNC(name, diff, ...)\
         case OP_##name:\
@@ -211,7 +213,6 @@ static void simplify_node(ast_node * node)
     simplify_node(node->left);
     simplify_node(node->right);
 
-    if (is_num(LEFT) && is_num(RIGHT)) collapse_const        (node);
     if (is_neg(LEFT) && is_neg(RIGHT)) extract_negative      (node);
     if (is_neg(LEFT))                  extract_left_negative (node);
     if (is_neg(RIGHT))                 extract_right_negative(node);
@@ -219,6 +220,7 @@ static void simplify_node(ast_node * node)
     if (is_zero(RIGHT))                extract_right_zero    (node);
     if (is_one(LEFT))                  extract_left_one      (node);
     if (is_one(RIGHT))                 extract_right_one     (node);
+    if (is_num(LEFT) && is_num(RIGHT)) collapse_const        (node);
     if (is_same_var(LEFT, RIGHT))      collapse_var          (node);
 }
 
@@ -235,7 +237,7 @@ static int is_const(ast_node * node, size_t var_id)
 ast_node* evaluate_partially(ast_node* node, size_t var_id, double val)
 {
     if (!node) return NULL;
-    if (node->type == NODE_NUM && node->value.var_id == var_id)
+    if (var_cmp(node, var_id))
         return NUM(val);
     
     ast_node* copy = make_node(node->type, node->value);
@@ -271,11 +273,12 @@ static inline void assign_num(ast_node* dest, double num)
     dest->right = NULL;
 }
 
-#define ASSIGN_NODE(num) assign_num(node, num)
 
 static void collapse_const(ast_node* node)
 {
+    #define ASSIGN_NODE(num) assign_num(node, num)
     #define COMBINE_CHILDREN(op) ASSIGN_NODE(get_num(LEFT) op get_num(RIGHT))
+
     LOG_ASSERT(is_op(node), return);
     LOG_ASSERT(is_num(LEFT), return);
     LOG_ASSERT(is_num(RIGHT), return);
@@ -292,16 +295,20 @@ static void collapse_const(ast_node* node)
     }
 
     #undef COMBINE_CHILDREN
+    #undef ASSIGN_NODE
 }
 
 void extract_negative(ast_node* node)
 {
     LOG_ASSERT(node, return);
-    if (is_num(node) && get_num(node) < 0)
+    if (is_num(node))
     {
-        node->right = make_number_node(-1 * get_num(node));
-        node->type = NODE_OP;
-        node->value.op = OP_NEG;
+        if (get_num(node) < 0)
+        {
+            node->right = make_number_node(-1 * get_num(node));
+            node->type = NODE_OP;
+            node->value.op = OP_NEG;
+        }
         return;
     }
 
@@ -313,11 +320,13 @@ void extract_negative(ast_node* node)
     {
     case OP_ADD:
     case OP_SUB:
+        replace_with(LEFT,  LEFT ->right);
+        replace_with(RIGHT, RIGHT->right);
         replace_with(node, NEG(
             make_binary_node(
                 get_op(node),
-                LEFT->right,
-                RIGHT->right)));
+                LEFT,
+                RIGHT)));
         simplify_node(RIGHT);
         break;
     case OP_MUL:
@@ -338,9 +347,11 @@ static void extract_left_negative(ast_node* node)
     switch(get_op(node))
     {
     case OP_ADD:
+        replace_with(LEFT, LEFT->right);
         replace_with(node, SUB(RIGHT, LEFT));
         break;
     case OP_SUB:
+        replace_with(LEFT, LEFT->right);
         replace_with(node, NEG(ADD(LEFT, RIGHT)));
         break;
     case OP_MUL:
@@ -371,9 +382,11 @@ static void extract_right_negative(ast_node* node)
     switch (get_op(node))
     {
     case OP_ADD:
+        replace_with(RIGHT, RIGHT->right);
         replace_with(node, SUB(LEFT, RIGHT));
         break;;
     case OP_SUB:
+        replace_with(RIGHT, RIGHT->right);
         replace_with(node, ADD(LEFT, RIGHT));
         break;
     case OP_MUL:
@@ -393,10 +406,12 @@ static void extract_right_negative(ast_node* node)
     case OP_ARCSIN:
     case OP_TAN:
     case OP_ARCTAN:
+        replace_with(RIGHT, RIGHT->right);
         replace_with(node, NEG(
             make_unary_node(
                 get_op(node),
                 RIGHT)));
+        break;
     case OP_COS:
         replace_with(RIGHT, RIGHT->right);
         break;
@@ -413,10 +428,20 @@ void extract_left_zero(ast_node* node)
 
     switch(get_op(node))
     {
-    case OP_ADD:              replace_with(node, RIGHT);      break;
-    case OP_SUB:              replace_with(node, NEG(RIGHT)); break;
-    case OP_MUL: case OP_DIV: ASSIGN_NODE(0);                 break;
-    default:                                                  break;
+    case OP_ADD:
+        delete_node(LEFT);
+        replace_with(node, RIGHT);
+        break;
+    case OP_SUB:
+        delete_node(LEFT);
+        replace_with(node, NEG(RIGHT));
+        break;
+    case OP_MUL:
+    case OP_DIV:
+        assign_num  (node, 0);
+        break;
+    default:
+        break;
     }
 }
 
@@ -431,6 +456,7 @@ void extract_right_zero(ast_node* node)
     {
     case OP_ADD:
     case OP_SUB:
+        delete_node(RIGHT);
         replace_with(node, LEFT);
         break;
     case OP_MUL:
@@ -458,9 +484,15 @@ void extract_left_one(ast_node *node)
 
     switch (get_op(node))
     {
-    case OP_MUL: replace_with(node, RIGHT); break;
-    case OP_POW: assign_num  (node, 1);     break;
-    default:                                break;
+    case OP_MUL:
+        delete_node(LEFT);
+        replace_with(node, RIGHT);
+        break;
+    case OP_POW:
+        assign_num  (node, 1);
+        break;
+    default:
+        break;
     }
 }
 
@@ -474,6 +506,7 @@ void extract_right_one(ast_node *node)
     case OP_MUL:
     case OP_DIV:
     case OP_POW:
+        delete_node(RIGHT);
         replace_with(node, LEFT);
         break;
     case OP_LN:

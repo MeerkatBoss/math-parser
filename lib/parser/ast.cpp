@@ -44,7 +44,7 @@ ast_node * make_number_node(double val)
 
 ast_node * make_var_node(size_t id)
 {
-    return make_node(NODE_NUM, {.var_id = id});
+    return make_node(NODE_VAR, {.var_id = id});
 }
 
 ast_node* copy_tree(ast_node * node)
@@ -246,7 +246,7 @@ static void print_node(
         fprintf(stream, "%g ", node->value.num);
         return;
     }
-    if (node->type == NODE_NUM)
+    if (node->type == NODE_VAR)
     {
         LOG_ASSERT_ERROR(node->value.var_id < ast->var_cnt,
         {
