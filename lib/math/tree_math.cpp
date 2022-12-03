@@ -6,12 +6,12 @@
 #include "math_utils.h"
 #include "tree_math.h"
 
-static ast_node* get_differential(ast_node* node, var_name var);
+static ast_node* get_differential(ast_node* node, var_name var, article_builder* article, int no_print = 1);
 static void simplify_node(ast_node* node);
 static int is_const(ast_node* node, var_name var);
 static ast_node* evaluate_partially(ast_node* node, var_name var, double val);
 
-abstract_syntax_tree* derivative(abstract_syntax_tree * ast, const char * var)
+abstract_syntax_tree* derivative(abstract_syntax_tree * ast, const char * var, article_builder* article)
 {
     size_t var_id = 0;
     LOG_ASSERT_ERROR(
@@ -21,10 +21,22 @@ abstract_syntax_tree* derivative(abstract_syntax_tree * ast, const char * var)
     
     var_name v_name = *array_get_element(&ast->variables, var_id);
 
+    string_builder_append(&article->text, "Let us find the derivative of the following function:\n");
+    print_node(ast->root, &article->text);
+    
     abstract_syntax_tree* result = tree_copy(ast);
     
-    result->root = get_differential(ast->root, v_name);
+    result->root = get_differential(ast->root, v_name, article);
+
+    string_builder_append(&article->text, "\nNow the proof that the derivative of this function is equal to\n");
+    print_node(result->root, &article->text);
+    article_add_placeholder(article);
+
+    article_add_transition(article);
+    string_builder_append(&article->text, "if we simplify this we wil get\n");
     simplify(result);
+    print_node(result->root, &article->text);
+
 
     return result;
 }
@@ -52,17 +64,22 @@ static inline ast_node* COS (ast_node* right) { return make_unary_node(OP_COS, r
 static inline ast_node* SQRT(ast_node* right) { return make_unary_node(OP_SQRT, right);}
 static inline ast_node* LN  (ast_node* right) { return make_unary_node(OP_LN, right);  }
 
-#define D(x) get_differential(x, var)
+#define D(x) get_differential(x, var, article, print)
 
 static inline ast_node* CPY(ast_node* node) { return copy_subtree(node); }
 
-abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * var, int pow)
+abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * var, int pow, article_builder* article)
 {
     size_t var_id = 0;
     LOG_ASSERT_ERROR(
         array_try_find_variable(&ast->variables, var, &var_id),
         return NULL,
         "Variable '%s' was not defined", var);
+
+    string_builder_append_format(&article->text, "Let us find the Taylor series"
+                                                 " at $%s = %g$ of the following function:\n",
+                                                 var, 0.0);
+    print_node(ast->root, &article->text);
 
     abstract_syntax_tree* result = tree_copy(ast);
     result->root = make_number_node(0);
@@ -85,25 +102,46 @@ abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * 
                     )
                 )
             );
-        ast_node* nxt = get_differential(cur, v_name);
+        ast_node* nxt = get_differential(cur, v_name, article);
         delete_subtree(cur);
         cur = nxt;
         simplify_node(cur);
     }
-    simplify_node(result->root);
     delete_subtree(cur);
+
+    string_builder_append_format(&article->text, "\nNow the proof that the Taylor series of this function"
+                                                 " at $%s = %g$ is equal to\n", var, 0.0);
+    print_node(result->root, &article->text);
+    article_add_placeholder(article);
+
+    article_add_transition(article);
+    string_builder_append(&article->text, "if we simplify this we wil get\n");
+    simplify(result);
+    print_node(result->root, &article->text);
 
     return result;
 }
 
-static ast_node* get_differential(ast_node * node, var_name var)
+static ast_node* get_differential(ast_node * node, var_name var, article_builder* article, int print)
 {
+    if (print && !is_op(LEFT) && !is_op(RIGHT))
+    {
+        article_add_starter(article);
+        print_node(node, &article->text);
+        article_add_transition(article);
+
+        ast_node* result = get_differential(node, var, article, 0);
+        string_builder_append(&article->text, "the derivative of this is equal to\n");
+        print_node(result, &article->text);
+        
+        return result;
+    }
+
     if (var_cmp(node, var))
         return NUM(1);
 
     if (is_const(node, var))
         return NUM(0);
-
     
     #define MATH_FUNC(name, diff, ...)\
         case OP_##name:\
@@ -416,7 +454,7 @@ static void extract_right_negative(ast_node* node)
 
 }
 
-void extract_left_zero(ast_node* node)
+static void extract_left_zero(ast_node* node)
 {
     LOG_ASSERT(is_op(node), return);
     LOG_ASSERT(is_zero(LEFT), return);
@@ -440,7 +478,7 @@ void extract_left_zero(ast_node* node)
     }
 }
 
-void extract_right_zero(ast_node* node)
+static void extract_right_zero(ast_node* node)
 {
     LOG_ASSERT(is_op(node), return);
     LOG_ASSERT(is_zero(RIGHT), return);
@@ -472,7 +510,7 @@ void extract_right_zero(ast_node* node)
     }
 }
 
-void extract_left_one(ast_node *node)
+static void extract_left_one(ast_node *node)
 {
     LOG_ASSERT(is_op(node), return);
     LOG_ASSERT(is_one(LEFT), return);
@@ -491,7 +529,7 @@ void extract_left_one(ast_node *node)
     }
 }
 
-void extract_right_one(ast_node *node)
+static void extract_right_one(ast_node *node)
 {
     LOG_ASSERT(is_op(node), return);
     LOG_ASSERT(is_one(RIGHT), return);
@@ -515,7 +553,7 @@ void extract_right_one(ast_node *node)
     }
 }
 
-void collapse_var(ast_node *node)
+static void collapse_var(ast_node *node)
 {
     LOG_ASSERT(is_op(node), return);
     LOG_ASSERT(is_same_var(LEFT, RIGHT), return);

@@ -46,13 +46,13 @@ add_subdirectory(lib/string_builder)
 
 add_subdirectory(lib/math_utils)
 
+add_subdirectory(lib/article_builder)
+
 add_subdirectory(lib/lexer)
 
 add_subdirectory(lib/parser)
 
 add_subdirectory(lib/math)
-
-add_subdirectory(lib/article_builder)
 
 add_subdirectory(src)
 

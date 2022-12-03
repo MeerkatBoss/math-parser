@@ -9,7 +9,7 @@ static inline int rand_init(void) { srand(time(NULL)); return 1; }
 
 static int rand_initialized_ = rand_init();
 
-static inline size_t my_rand(void) {return (size_t) (rand() << 16 + rand()); }
+static inline size_t my_rand(void) {return ((size_t)rand() << 16) + (size_t)rand(); }
 
 void article_ctor(article_builder *article)
 {
@@ -142,11 +142,11 @@ void article_add_transition(article_builder *article)
 
     if (article->transitions.text == NULL)
     {
-        string_builder_append(&article->text, "Now look at this:\n");
+        string_builder_append(&article->text, "As you can see,");
         return;
     }
 
-    string_builder_append_format(&article->text, "%s\n",
+    string_builder_append_format(&article->text, "%s ",
                 article->transitions.lines[my_rand() % article->transitions.line_count].line);
 }
 
@@ -157,7 +157,7 @@ void article_add_placeholder(article_builder *article)
 
     if (article->placeholders.text == NULL)
     {
-        string_builder_append(&article->text, "Now look at this:\n");
+        string_builder_append(&article->text, "is easy to see.\n\n");
         return;
     }
 
