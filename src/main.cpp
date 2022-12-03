@@ -18,6 +18,7 @@ int main()
     }); // TODO: can this be in default logger?
 
     dynamic_array(token)* tokens = parse_tokens("(x + 1)^{\\frac{\\sin x}{2}} \\cdot (\\arctan \\sqrt{x^2 + 1})^{x - 2}");
+    // dynamic_array(token)* tokens = parse_tokens("\\frac{1}{x + 1}");
     abstract_syntax_tree* ast = build_tree(tokens);
     abstract_syntax_tree* deriv = derivative(ast, "x");
     abstract_syntax_tree* maclaurin = maclaurin_series(ast, "x", 3);
@@ -29,14 +30,6 @@ int main()
     putc('\n', stdout);
     print_tree(maclaurin, stdout);
     putc('\n', stdout);
-
-    // for (list_iterator it = list_begin(tokens);
-    //         it != 0;
-    //         it = next_element(tokens, it))
-    // {
-    //     if (get_element(tokens, it)->type == TOK_VAR)
-    //         free(get_element(tokens, it)->value.name);
-    // }
 
     array_dtor(tokens);
     free(tokens);

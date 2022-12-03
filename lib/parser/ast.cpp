@@ -47,13 +47,13 @@ ast_node * make_var_node(size_t id)
     return make_node(NODE_VAR, {.var_id = id});
 }
 
-ast_node* copy_tree(ast_node * node)
+ast_node* copy_subtree(ast_node * node)
 {
     if (!node) return NULL;
 
     ast_node* res = make_node(node->type, node->value);
-    res->left   = copy_tree(node->left);
-    res->right  = copy_tree(node->right);
+    res->left   = copy_subtree(node->left);
+    res->right  = copy_subtree(node->right);
     if (res-> left) res-> left->parent = res;
     if (res->right) res->right->parent = res;
 
@@ -81,32 +81,33 @@ void delete_subtree(ast_node* node)
 
 abstract_syntax_tree* tree_ctor(void)
 {
-    abstract_syntax_tree *result = (abstract_syntax_tree*) calloc(1, sizeof(*result));
-    *result = {
-        .root    = NULL,
-        .var_cnt = 0,
-        .vars    = {}
-    };
+    abstract_syntax_tree* result = (abstract_syntax_tree*) calloc(1, sizeof(*result));
+    result->root = NULL;
+    array_ctor(&result->variables);
     return result;
 }
 
-void tree_dtor(abstract_syntax_tree* tree)
+abstract_syntax_tree* tree_copy(const abstract_syntax_tree* src)
+{
+    abstract_syntax_tree* result = (abstract_syntax_tree*) calloc(1, sizeof(*result));
+    result->root = NULL;
+    array_copy(&result->variables, &src->variables);
+    return result;
+}
+
+void tree_dtor(abstract_syntax_tree *tree)
 {
     LOG_ASSERT(tree != NULL, return);
 
     if (tree->root) delete_subtree(tree->root);
     tree->root = NULL;
 
-    for (size_t i = 0; i < tree->var_cnt; i++)
-    {
-        free(tree->vars[i]);
-        tree->vars[i] = NULL;
-    }
+    array_dtor(&tree->variables);
 
     free(tree);
 }
 
-tree_iterator tree_begin(abstract_syntax_tree* tree)
+tree_iterator tree_begin(abstract_syntax_tree *tree)
 {
     LOG_ASSERT(tree != NULL, return NULL);
     LOG_ASSERT(tree->root != NULL, return NULL);
@@ -241,24 +242,24 @@ static void print_node(
         return;
     }
 
-    if (node->type == NODE_NUM)
+    if (is_num(node))
     {
-        fprintf(stream, "%g ", node->value.num);
+        fprintf(stream, "%g ", get_num(node));
         return;
     }
-    if (node->type == NODE_VAR)
+    if (is_var(node))
     {
-        LOG_ASSERT_ERROR(node->value.var_id < ast->var_cnt,
+        LOG_ASSERT_ERROR(node->value.var_id < ast->variables.size,
         {
             fprintf(stream, "[UNKNOWN]");
             return;
         }, "Unknown variable encountered.", NULL);
 
-        fprintf(stream, "%s ", ast->vars[node->value.var_id]);
+        fprintf(stream, "%s ", *array_get_element(&ast->variables, get_var(node)));
         return;
     }
 
-    if (node->value.op == OP_DIV)
+    if (op_cmp(node, OP_DIV))
     {
         fprintf(stream, "\\frac{");
         print_node(node->left, ast, labels, stream);
@@ -277,9 +278,9 @@ static void print_node(
         if (group) fprintf(stream, "\\right) ");
     }
 
-    print_op(node->value.op, stream);
+    print_op(get_op(node), stream);
 
-    if (node->value.op == OP_POW || node->value.op == OP_SQRT)
+    if (op_cmp(node, OP_POW) || op_cmp(node, OP_SQRT))
     {
         fprintf(stream, "{");
         print_node(node->right, ast, labels, stream);
@@ -301,9 +302,9 @@ static int requires_grouping(const ast_node * parent, const ast_node * child)
         return 0;
     LOG_ASSERT(parent->type == NODE_OP, return 0);
 
-    op_type child_op = child->value.op;
+    op_type child_op = get_op(child);
 
-    switch (parent->value.op)
+    switch (get_op(parent))
     {
     case OP_ADD:
         return 0;

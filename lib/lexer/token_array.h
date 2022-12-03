@@ -58,4 +58,6 @@ inline void delete_element(ARRAY_ELEMENT* element)
 
 #include "dynamic_array.h"
 
+#undef ARRAY_ELEMENT
+
 #endif

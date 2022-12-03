@@ -13,17 +13,13 @@ static ast_node* evaluate_partially(ast_node* node, size_t var_id, double val);
 
 abstract_syntax_tree* derivative(abstract_syntax_tree * ast, const char * var)
 {
-    size_t var_id = ast->var_cnt;
-    for (size_t i = 0; i < ast->var_cnt; i++)
-        if (strcmp(var, ast->vars[i]) == 0) // TODO: cheto takoe videl uze, extract!!
-            var_id = i;
-    LOG_ASSERT_ERROR(var_id < ast->var_cnt, return NULL,
+    size_t var_id = 0;
+    LOG_ASSERT_ERROR(
+        array_try_find_variable(&ast->variables, var, &var_id),
+        return NULL,
         "Variable '%s' was not defined", var);
 
-    abstract_syntax_tree* result = tree_ctor();
-    result->var_cnt = ast->var_cnt;
-    for (size_t i = 0; i < ast->var_cnt; i++)
-        result->vars[i] = strdup(ast->vars[i]); // TODO: many bukva, malo smisla, extract!
+    abstract_syntax_tree* result = tree_copy(ast);
     
     result->root = get_differential(ast->root, var_id);
     simplify(result);
@@ -31,7 +27,7 @@ abstract_syntax_tree* derivative(abstract_syntax_tree * ast, const char * var)
     return result;
 }
 
-void simplify(abstract_syntax_tree * ast)
+void simplify(abstract_syntax_tree* ast)
 {
     simplify_node(ast->root);
 }
@@ -56,22 +52,18 @@ static inline ast_node* LN  (ast_node* right) { return make_unary_node(OP_LN, ri
 
 #define D(x) get_differential(x, var_id)
 
-static inline ast_node* CPY(ast_node* node) { return copy_tree(node); }
+static inline ast_node* CPY(ast_node* node) { return copy_subtree(node); }
 
 abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * var, int pow)
 {
-    size_t var_id = ast->var_cnt;
-    for (size_t i = 0; i < ast->var_cnt; i++)
-        if (strcmp(var, ast->vars[i]) == 0) // TODO: mnoga bukov malo smisla
-            var_id = i;
-    LOG_ASSERT_ERROR(var_id < ast->var_cnt, return NULL,
+    size_t var_id = 0;
+    LOG_ASSERT_ERROR(
+        array_try_find_variable(&ast->variables, var, &var_id),
+        return NULL,
         "Variable '%s' was not defined", var);
 
-    abstract_syntax_tree* result = tree_ctor();
-    result->var_cnt = ast->var_cnt;
-    for (size_t i = 0; i < ast->var_cnt; i++)
-        result->vars[i] = strdup(ast->vars[i]); // TODO: mnoga bukov malo smisla
-    result->root = NUM(0);
+    abstract_syntax_tree* result = tree_copy(ast);
+    result->root = make_number_node(0);
     
     ast_node* cur = CPY(ast->root);
     for (int i = 0; i <= pow; i++)

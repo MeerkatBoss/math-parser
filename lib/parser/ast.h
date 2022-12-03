@@ -16,6 +16,8 @@
 
 #include "math_utils.h"
 
+#include "var_name_array.h"
+
 /**
  * @brief AST node type
  */
@@ -83,24 +85,19 @@ struct ast_node
 
 /* TODO: docs */
 
-inline double  get_num(ast_node* node)             { return node->value.num; }
-inline int     is_num (ast_node* node)             { return node && node->type == NODE_NUM;}
-inline int     num_cmp(ast_node* node, double num) { return is_num(node) && compare_double(get_num(node), num) == 0; }
+inline double  get_num(const ast_node* node)             { return node->value.num; }
+inline int     is_num (const ast_node* node)             { return node && node->type == NODE_NUM;}
+inline int     num_cmp(const ast_node* node, double num) { return is_num(node) && compare_double(get_num(node), num) == 0; }
 
-inline op_type get_op (ast_node* node)             { return node->value.op; }
-inline int     is_op  (ast_node* node)             { return node && node->type == NODE_OP; }
-inline int     op_cmp (ast_node* node, op_type op) { return is_op(node) && get_op(node) == op; }
+inline op_type get_op (const ast_node* node)             { return node->value.op; }
+inline int     is_op  (const ast_node* node)             { return node && node->type == NODE_OP; }
+inline int     op_cmp (const ast_node* node, op_type op) { return is_op(node) && get_op(node) == op; }
 
-inline size_t  get_var(ast_node* node)             { return node->value.var_id; }
-inline int     is_var (ast_node* node)             { return node && node->type == NODE_VAR; }
-inline int     var_cmp(ast_node* node, size_t op)  { return is_var(node) && get_var(node) == op; }
+inline size_t  get_var(const ast_node* node)             { return node->value.var_id; }
+inline int     is_var (const ast_node* node)             { return node && node->type == NODE_VAR; }
+inline int     var_cmp(const ast_node* node, size_t var) { return is_var(node) && get_var(node) == var; }
 
 typedef ast_node* tree_iterator;
-
-/**
- * @brief Maximum allowed number of variables in expression
- */
-const size_t MAX_VARS = 16;
 
 /**
  * @brief Abstract syntax tree
@@ -111,15 +108,11 @@ struct abstract_syntax_tree
      * @brief Tree root node
      */
     ast_node*   root;
-    /**
-     * @brief Number of used variables
-     */
 
-    size_t      var_cnt; // TODO: dynamic_array(char*)???
     /**
      * @brief Array of variable names
      */
-    char*       vars[MAX_VARS]; // TODO: make dynamic
+    dynamic_array(var_name) variables;
 };
 
 /**
@@ -166,7 +159,7 @@ ast_node* make_var_node(size_t id);
 
 /* TODO: docs */ 
 
-ast_node* copy_tree(ast_node* node);
+ast_node* copy_subtree(ast_node* node);
 
 /**
  * @brief Delete ast node. Free associated resources.
@@ -190,6 +183,15 @@ void delete_subtree(ast_node* node);
  * @return Constructed `abstract_syntax_tree` instance
  */
 abstract_syntax_tree* tree_ctor(void);
+
+/**
+ * @brief Create empty `abstract_syntax_tree` based on another tree.
+ * Nodes are not copied.
+ * 
+ * @param[in] src `abstract_syntax_tree` to be copied
+ * @return Constructed `abstract_syntax_tree` instance
+ */
+abstract_syntax_tree* tree_copy(const abstract_syntax_tree* src);
 
 /**
  * @brief Destroy `abstract_syntax_tree`

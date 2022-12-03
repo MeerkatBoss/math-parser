@@ -8,8 +8,7 @@ struct parsing_state
 {
     const dynamic_array(token)* tokens;
     size_t pos;
-    size_t var_cnt; // TODO: please, have mercy
-    char** vars;
+    dynamic_array(var_name)* variables;
 };
 
 static ast_node* parse_sum(parsing_state* state);
@@ -54,10 +53,9 @@ abstract_syntax_tree* build_tree(const dynamic_array(token)* tokens)
 {
     abstract_syntax_tree* ast = tree_ctor();
     parsing_state state = {
-        .tokens  = tokens,
-        .pos     = 0,
-        .var_cnt = 0,
-        .vars    = ast->vars
+        .tokens    = tokens,
+        .pos       = 0,
+        .variables = &ast->variables
     };
     ast->root = parse_sum(&state);
     LOG_ASSERT(ast->root,
@@ -70,7 +68,6 @@ abstract_syntax_tree* build_tree(const dynamic_array(token)* tokens)
         tree_dtor(ast);
         return NULL;
     }, "Unexpected tokens after expression end.", NULL);
-    ast->var_cnt = state.var_cnt;
     return ast;
 }
 
@@ -190,22 +187,16 @@ ast_node * parse_atom(parsing_state * state)
     
     if (consume_check(state, TOK_VAR))
     {
-        char *name = last_token(state)->value.name;
-        size_t var_id = get_var_id(state, name);
+        var_name name = last_token(state)->value.name;
+        size_t var_id = 0;
+        if (!array_try_find_variable(state->variables, name, &var_id))
+        {
+            array_push(state->variables, name);
+            var_id = state->variables->size - 1;
+        }
         return make_var_node(var_id);
     }
 
     LOG_ASSERT_ERROR(0, return NULL,
         "Unexpected token %d", current_token(state)->type);
-}
-
-size_t get_var_id(parsing_state * state, const char * name)
-{
-    for (size_t i = 0; i < state->var_cnt; i++)
-        if (strcmp(name, state->vars[i]) == 0)
-            return i;
-    LOG_ASSERT_ERROR(state->var_cnt < MAX_VARS, return (size_t)-1,
-                        "Too many variables in an expression", NULL);
-    state->vars[state->var_cnt] = strdup(name);
-    return state->var_cnt++;
 }
