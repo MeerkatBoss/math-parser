@@ -12,6 +12,11 @@ abstract_syntax_tree* derivative(abstract_syntax_tree* ast, const char* var, art
 
 void simplify(abstract_syntax_tree* ast);
 
-abstract_syntax_tree* maclaurin_series(abstract_syntax_tree* ast, const char* var, int pow, article_builder* article);
+abstract_syntax_tree* taylor_series(
+                                abstract_syntax_tree* ast,
+                                double point,
+                                const char* var,
+                                int pow,
+                                article_builder* article);
 
 #endif

@@ -38,7 +38,7 @@ int main()
     abstract_syntax_tree* deriv = derivative(ast, "x", &article);
 
     article_add_section(&article, "Taylor series");
-    abstract_syntax_tree* maclaurin = maclaurin_series(ast, "x", 3, &article);
+    abstract_syntax_tree* taylor = taylor_series(ast, 5, "x", 1, &article);
 
     article_end(&article);
 
@@ -49,10 +49,12 @@ int main()
 
     plot_node(ast->root, stdout);
     putc('\n', stdout);
+    plot_node(taylor->root, stdout);
+    putc('\n', stdout);
 
     tree_dtor(ast);
     tree_dtor(deriv);
-    tree_dtor(maclaurin);
+    tree_dtor(taylor);
     article_dtor(&article);
     return 0;
 }

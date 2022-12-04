@@ -68,7 +68,12 @@ static inline ast_node* LN  (ast_node* right) { return make_unary_node(OP_LN, ri
 
 static inline ast_node* CPY(ast_node* node) { return copy_subtree(node); }
 
-abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * var, int pow, article_builder* article)
+abstract_syntax_tree* taylor_series(
+                            abstract_syntax_tree * ast,
+                            double point,
+                            const char * var,
+                            int pow,
+                            article_builder* article)
 {
     size_t var_id = 0;
     LOG_ASSERT_ERROR(
@@ -78,7 +83,7 @@ abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * 
 
     string_builder_append_format(&article->text, "Let us find the Taylor series"
                                                  " at $%s = %g$ of the following function:\n",
-                                                 var, 0.0);
+                                                 var, point);
     print_node(ast->root, &article->text);
 
     abstract_syntax_tree* result = tree_copy(ast);
@@ -89,7 +94,7 @@ abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * 
     ast_node* cur = CPY(ast->root);
     for (int i = 0; i <= pow; i++)
     {
-        ast_node* at_zero = evaluate_partially(cur, v_name, 0);
+        ast_node* at_zero = evaluate_partially(cur, v_name, point);
         simplify_node(at_zero);
         result->root =
             ADD(
@@ -97,7 +102,9 @@ abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * 
                 MUL(
                     at_zero,
                     FRAC(
-                        POW(VAR(v_name), NUM(i)),
+                        POW(
+                            SUB(VAR(v_name), NUM(point)),
+                            NUM(i)),
                         NUM(factorial(i))
                     )
                 )
@@ -110,7 +117,7 @@ abstract_syntax_tree* maclaurin_series(abstract_syntax_tree * ast, const char * 
     delete_subtree(cur);
 
     string_builder_append_format(&article->text, "\nNow the proof that the Taylor series of this function"
-                                                 " at $%s = %g$ is equal to\n", var, 0.0);
+                                                 " at $%s = %g$ is equal to\n", var, point);
     print_node(result->root, &article->text);
     article_add_placeholder(article);
 
