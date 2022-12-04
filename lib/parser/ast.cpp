@@ -176,6 +176,50 @@ tree_iterator tree_end(abstract_syntax_tree* tree)
     return node;
 }
 
+void plot_node(const ast_node *node, FILE *output)
+{
+    #define PLOT_INFIX(op) do\
+        {\
+            fputc('(', output); plot_node(node->left, output);\
+            fputs(")" #op "(", output); plot_node(node->right, output); fputc(')', output);\
+        } while(0)
+    #define PLOT_UNARY(op) do\
+        {\
+            fputs(#op "(", output); plot_node(node->right, output); fputc(')', output);\
+        } while(0)
+    #define PLOT_COMPOUND(op, plot) do\
+        {\
+            fputs("(" #op "(", output); plot; fputs("))", output);\
+        } while(0)
+    
+    if (is_num(node)) { fprintf(output, "%g", get_num(node)); return; }
+    if (is_var(node)) { fprintf(output, "%s", get_var(node)); return; }
+
+    switch(get_op(node))
+    {
+    case OP_ADD:    PLOT_INFIX(+);                          break;
+    case OP_SUB:    PLOT_INFIX(-);                          break;
+    case OP_MUL:    PLOT_INFIX(*);                          break;
+    case OP_DIV:    PLOT_INFIX(/);                          break;
+    case OP_NEG:    PLOT_UNARY(-);                          break;
+    case OP_LN:     PLOT_UNARY(log);                        break;
+    case OP_SQRT:   PLOT_UNARY(sqrt);                       break;
+    case OP_SIN:    PLOT_UNARY(sin);                        break;
+    case OP_COS:    PLOT_UNARY(cos);                        break;
+    case OP_TAN:    PLOT_UNARY(tan);                        break;
+    case OP_COT:    PLOT_COMPOUND(1/, PLOT_UNARY(tan));     break;
+    case OP_ARCSIN: PLOT_UNARY(asin);                       break;
+    case OP_ARCCOS: PLOT_COMPOUND(pi/2-, PLOT_UNARY(asin)); break;
+    case OP_ARCTAN: PLOT_UNARY(atan);                       break;
+    case OP_ARCCOT: PLOT_COMPOUND(pi/2, PLOT_UNARY(atan));  break;
+    case OP_POW:    PLOT_INFIX(**);                         break;
+    }
+
+    #undef PLOT_INFIX
+    #undef PLOT_UNARY
+    #undef PLOT_COMPOUND
+}
+
 static const int MAX_LABELS = 'Z'-'A'+1;
 
 

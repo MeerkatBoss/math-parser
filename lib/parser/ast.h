@@ -241,4 +241,12 @@ tree_iterator tree_end(abstract_syntax_tree* tree);
  */
 void print_node(const ast_node* node, string_builder* builder);
 
+/**
+ * @brief Output node such that gnuplot would understand it
+ * 
+ * @param[in] node Plotted node
+ * @param[in] output Output stream
+ */
+void plot_node(const ast_node* node, FILE* output);
+
 #endif

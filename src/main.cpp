@@ -47,6 +47,9 @@ int main()
     array_dtor(tokens);
     free(tokens);
 
+    plot_node(ast->root, stdout);
+    putc('\n', stdout);
+
     tree_dtor(ast);
     tree_dtor(deriv);
     tree_dtor(maclaurin);
