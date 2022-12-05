@@ -220,6 +220,23 @@ void plot_node(const ast_node *node, FILE *output)
     #undef PLOT_COMPOUND
 }
 
+void plot_tangent(const ast_node *node, const ast_node* tangent, const char *filename)
+{
+    FILE* plot = popen("gnuplot", "w");
+
+    fputs("set terminal png\n", plot);
+    fprintf(plot, "set output \"%s\"\n", filename);
+    fputs("set grid\n", plot);
+
+    fputs("plot ", plot);
+    plot_node(node, plot);
+    fputs(" title \"y = f(x)\", ", plot);
+    plot_node(tangent, plot);
+    fputs(" title \"tangent\"\n", plot);
+
+    pclose(plot);
+}
+
 static const int MAX_LABELS = 'Z'-'A'+1;
 
 

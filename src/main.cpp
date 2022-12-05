@@ -21,7 +21,6 @@ int main()
 
 
     dynamic_array(token)* tokens = parse_tokens("(x + 1)^{\\frac{\\sin x}{2}} \\cdot (\\arctan \\sqrt{x^2 + 1})^{x - 2}");
-    // dynamic_array(token)* tokens = parse_tokens("\\frac{1}{x + 1}");
     abstract_syntax_tree* ast = build_tree(tokens);
 
     article_builder article = {};
@@ -38,23 +37,23 @@ int main()
     abstract_syntax_tree* deriv = derivative(ast, "x", &article);
 
     article_add_section(&article, "Taylor series");
-    abstract_syntax_tree* taylor = taylor_series(ast, 5, "x", 1, &article);
+    abstract_syntax_tree* taylor = taylor_series(ast, 0, "x", 3, &article);
+
+    article_add_section(&article, "Tangent");
+    abstract_syntax_tree* tangent = taylor_series(ast, 5, "x", 1, &article);
+
+    plot_tangent(ast->root, tangent->root, "output/plot.png");
+    string_builder_append(&article.text, "\\includegraphics{\"plot.png\"}\n");
 
     article_end(&article);
 
     article_build(&article, "output");
 
-    array_dtor(tokens);
-    free(tokens);
-
-    plot_node(ast->root, stdout);
-    putc('\n', stdout);
-    plot_node(taylor->root, stdout);
-    putc('\n', stdout);
-
+    array_dtor(tokens); free(tokens);
     tree_dtor(ast);
     tree_dtor(deriv);
     tree_dtor(taylor);
+    tree_dtor(tangent);
     article_dtor(&article);
     return 0;
 }
