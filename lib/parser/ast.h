@@ -249,6 +249,10 @@ void print_node(const ast_node* node, string_builder* builder);
  */
 void plot_node(const ast_node* node, FILE* output);
 
-void plot_tangent(const ast_node* func, const ast_node* tangent, const char* filename);
+void plot_tangent(const ast_node* func,
+                    const ast_node* tangent,
+                    const char* filename,
+                    double range_left = -10,
+                    double range_right = 10);
 
 #endif

@@ -1,0 +1,7 @@
+$f(x) = (x + 1)^{\frac{\sin x}{2}} \cdot (\arctan \sqrt{x^2 + 1})^{x - 2}$
+
+Taylor series at 0 to $x^3$
+
+Tangent at $x=5$
+
+Plot in range [0, 10]

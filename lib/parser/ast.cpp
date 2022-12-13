@@ -220,16 +220,22 @@ void plot_node(const ast_node *node, FILE *output)
     #undef PLOT_COMPOUND
 }
 
-void plot_tangent(const ast_node *node, const ast_node* tangent, const char *filename)
+void plot_tangent(const ast_node* func,
+                    const ast_node* tangent,
+                    const char* filename,
+                    double range_left,
+                    double range_right)
 {
     FILE* plot = popen("gnuplot", "w");
 
     fputs("set terminal png\n", plot);
     fprintf(plot, "set output \"%s\"\n", filename);
     fputs("set grid\n", plot);
+    fprintf(plot, "set xrange [%lg:%lg]\n", range_left, range_right);
+    fputs("set samples 400\n", plot);
 
     fputs("plot ", plot);
-    plot_node(node, plot);
+    plot_node(func, plot);
     fputs(" title \"y = f(x)\", ", plot);
     plot_node(tangent, plot);
     fputs(" title \"tangent\"\n", plot);
